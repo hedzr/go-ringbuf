@@ -14,7 +14,7 @@ func New(capacity uint32, opts ...Opt) RingBuffer {
 		return nil
 	}
 
-	size := roundToPower2(capacity)
+	size := roundUpToPower2(capacity)
 	//// logger := initLogger("all.log", "debug")
 	//logger := initLoggerConsole(zapcore.DebugLevel)
 	rb := &ringBuf{
@@ -41,7 +41,7 @@ func New(capacity uint32, opts ...Opt) RingBuffer {
 	return rb
 }
 
-// WithDebugMode enables the internal debug mode for more logging output, and the metrics for debugging
+// WithDebugMode enables the internal debug mode for more logging output, and collect the metrics for debugging
 func WithDebugMode(debug bool) Opt {
 	return func(buf *ringBuf) {
 		buf.debugMode = debug
@@ -145,7 +145,9 @@ func (rb *ringBuf) Debug(enabled bool) (lastState bool) {
 	return
 }
 
-func roundToPower2(v uint32) uint32 {
+// roundUpToPower2 takes a uint32 positive integer and
+// rounds it up to the next power of 2.
+func roundUpToPower2(v uint32) uint32 {
 	v--
 	v |= v >> 1
 	v |= v >> 2
