@@ -2,6 +2,7 @@
  * Copyright © 2019 Hedzr Yeh.
  */
 
+// Package ringbuf provides a lock-free ring-buffer (ringbuf/fast).
 package ringbuf
 
 const (
