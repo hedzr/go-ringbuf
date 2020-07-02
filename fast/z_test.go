@@ -41,4 +41,9 @@ func TestResets(t *testing.T) {
 	x := rb.(*ringBuf)
 	t.Logf("qty = %v, isEmpty = %v, isFull = %v", x.qty(x.head, x.tail), rb.IsEmpty(), rb.IsFull())
 	_, _ = rb.Get()
+
+	x.head = MaxUint32
+	x.tail = MaxUint32
+	_ = rb.Put(3)
+	_, _ = rb.Get()
 }
