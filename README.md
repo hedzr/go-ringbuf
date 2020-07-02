@@ -19,6 +19,10 @@ MPMC (multiple-producers and multiple consumers) enabled.
 
 ## Getting Start
 
+```bash
+go get -v github.com/hedzr/go-ringbuf
+```
+
 ### Import
 
 ```go
