@@ -234,8 +234,8 @@ func mtQueuePutGet(t *testing.T, cnt int, qSize uint32) {
 		// fmt.Printf("--- TEST %d/%d: putD = %v, getD = %v.\n", i, loops, putD, getD)
 	}
 	end := time.Now()
-	use := end.Sub(start.Add(lossTime))
-	use = putD + getD
+	// use := end.Sub(start.Add(lossTime))
+	use := putD + getD
 	// fmt.Printf("--- TEST: use = %v.\n", use)
 	op := use / time.Duration(sum)
 	t.Logf("Grp: %d, Times: %d, use: %v, %v/op", loops, sum, use, op)

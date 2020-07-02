@@ -69,6 +69,7 @@ type (
 		// _         cpu.CacheLinePad
 	}
 
+	// Logger interface fo ringBuf
 	Logger interface {
 		Flush() error
 		Info(fmt string, args ...interface{})
