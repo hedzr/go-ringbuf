@@ -1,8 +1,6 @@
 package fast
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"sync/atomic"
 	"unsafe"
 )
@@ -17,23 +15,23 @@ func New(capacity uint32, opts ...Opt) RingBuffer {
 	}
 
 	size := roundToPower2(capacity)
-	// logger := initLogger("all.log", "debug")
-	logger := initLoggerConsole(zapcore.DebugLevel)
+	//// logger := initLogger("all.log", "debug")
+	//logger := initLoggerConsole(zapcore.DebugLevel)
 	rb := &ringBuf{
 		data:       make([]rbItem, size),
 		head:       0,
 		tail:       0,
 		cap:        size,
 		capModMask: size - 1, // = 2^n - 1
-		logger:     logger,
+		//logger:     logger,
 	}
 
 	for _, opt := range opts {
 		opt(rb)
 	}
 
-	if rb.debugMode {
-		rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
+	if rb.debugMode && rb.logger != nil {
+		//	rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
 	}
 
 	for i := 0; i < (int)(size); i++ {
@@ -73,7 +71,7 @@ func (rb *ringBuf) ResetCounters() {
 
 func (rb *ringBuf) Close() (err error) {
 	if rb.logger != nil {
-		err = rb.logger.Sync()
+		err = rb.logger.Flush()
 		rb.logger = nil
 	}
 	return
