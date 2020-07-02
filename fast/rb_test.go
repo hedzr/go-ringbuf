@@ -220,7 +220,7 @@ func mtQueuePutGet(t *testing.T, cnt int, qSize uint32) {
 	// cnt := 10000
 	sum, loops := 0, runtime.NumCPU()*4
 	// fmt.Printf("--- TEST: cnt=%v, loops=%v.\n", cnt, loops)
-	start := time.Now()
+	// start := time.Now()
 	var putD, getD, lossTime time.Duration
 	var putRetry, getRetry int64
 	for i := 0; i <= loops; i++ {
@@ -233,7 +233,7 @@ func mtQueuePutGet(t *testing.T, cnt int, qSize uint32) {
 		lossTime += lt
 		// fmt.Printf("--- TEST %d/%d: putD = %v, getD = %v.\n", i, loops, putD, getD)
 	}
-	end := time.Now()
+	// end := time.Now()
 	// use := end.Sub(start.Add(lossTime))
 	use := putD + getD
 	// fmt.Printf("--- TEST: use = %v.\n", use)
