@@ -1,16 +1,33 @@
-# go-socketlib
+# go-ringbuf
 
-`go-socketlib` provides a simple, fast way to develop a socket server, or client.
+`go-ringbuf` provides a high-performance, lock-free circular queue (ring buffer) implementation in golang.
+
 
 ## Getting Start
 
 ### Import
 
 ```go
-import "github.com/hedzr/socketlib"
-```
+import "github.com/hedzr/ringbuf/fast"
 
-### Write a TCP server
+func main() {
+	var err error
+	var rb = fast.New(80)
+	err = rb.Enqueue(3)
+	errChk(err)
+	
+	var item interface{}
+	item, err = rb.Dequeue()
+	errChk(err)
+	fmt.Printf("dequeue ok: %v\n", item)
+}
+
+func errChk(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```
 
 
 

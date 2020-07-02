@@ -1,4 +1,4 @@
-package rb
+package fast
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 )
 
 type (
+	// Queue interface provides a set of standard queue operations
 	Queue interface {
 		Enqueue(item interface{}) (err error)
 		Dequeue() (item interface{}, err error)
@@ -21,6 +22,7 @@ type (
 		IsFull() (b bool)
 	}
 
+	// RingBuffer interface provides a set of standard ring buffer operations
 	RingBuffer interface {
 		io.Closer // for logger
 
@@ -42,6 +44,8 @@ type (
 		ResetCounters()
 	}
 
+	// ringBuf implements a circular buffer. It is a fixed size,
+	// and new writes will be blocked when queue is full.
 	ringBuf struct {
 		// isEmpty bool
 		cap        uint32
@@ -83,8 +87,8 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 		quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
 		head = (uint32)(quad & MaxUint32_64)
 		tail = (uint32)(quad >> 32)
-		// head = atomic.LoadUint32(&rb.head)
-		// tail = atomic.LoadUint32(&rb.tail)
+		// head = atomic.LoadUint32(&fast.head)
+		// tail = atomic.LoadUint32(&fast.tail)
 		nt = (tail + 1) & rb.capModMask
 
 		isFull := nt == head
@@ -110,8 +114,8 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 		return
 	}
 
-	// if rb.debugMode {
-	// 	rb.logger.Debug("[ringbuf][PUT] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("new tail", nt), zap.Uint32("head", head))
+	// if fast.debugMode {
+	// 	fast.logger.Debug("[ringbuf][PUT] ", zap.Uint32("cap", fast.cap), zap.Uint32("qty", fast.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("new tail", nt), zap.Uint32("head", head))
 	// }
 	return
 }
@@ -129,8 +133,8 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 		quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
 		head = (uint32)(quad & MaxUint32_64)
 		tail = (uint32)(quad >> 32)
-		// head = atomic.LoadUint32(&rb.head)
-		// tail = atomic.LoadUint32(&rb.tail)
+		// head = atomic.LoadUint32(&fast.head)
+		// tail = atomic.LoadUint32(&fast.tail)
 
 		isEmpty := head == tail
 		if isEmpty {
@@ -144,8 +148,8 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 			// cnt := 0
 			// for {
 			// 	item = holder.value
-			// 	nh = (head + 1) & rb.capModMask
-			// 	if atomic.CompareAndSwapUint32(&rb.head, head, nh) {
+			// 	nh = (head + 1) & fast.capModMask
+			// 	if atomic.CompareAndSwapUint32(&fast.head, head, nh) {
 			// 		break
 			// 	}
 			//
@@ -153,12 +157,12 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 			// 	// return
 			//
 			// 	time.Sleep(1 * time.Nanosecond)
-			// 	atomic.AddUint64(&rb.getWaits, 1)
+			// 	atomic.AddUint64(&fast.getWaits, 1)
 			//
 			// 	cnt++
 			// 	if cnt > 100 {
 			// 		atomic.CompareAndSwapUint64(&holder.readWrite, 3, 1)
-			// 		err = fmt.Errorf("[R] %w, head: %v => %v, tail: %v, 100 retried/getWaits=%v", ErrRaced, head, nh, tail, rb.getWaits)
+			// 		err = fmt.Errorf("[R] %w, head: %v => %v, tail: %v, 100 retried/getWaits=%v", ErrRaced, head, nh, tail, fast.getWaits)
 			// 		return
 			// 	}
 			// }
@@ -173,8 +177,8 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 		atomic.AddUint64(&rb.getWaits, 1)
 	}
 
-	// if rb.debugMode {
-	// 	rb.logger.Debug("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
+	// if fast.debugMode {
+	// 	fast.logger.Debug("[ringbuf][GET] ", zap.Uint32("cap", fast.cap), zap.Uint32("qty", fast.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
 	// }
 
 	if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {

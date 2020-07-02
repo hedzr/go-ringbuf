@@ -1,18 +1,16 @@
-package rb
+package fast
 
 import (
-	"errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"golang.org/x/sys/cpu"
-	"gopkg.in/natefinch/lumberjack.v2"
-	"sync"
 	"sync/atomic"
 	"unsafe"
 )
 
+// Opt interface the functional options
 type Opt func(buf *ringBuf)
 
+// New returns the RingBuffer object
 func New(capacity uint32, opts ...Opt) RingBuffer {
 	if !isInitialized() {
 		return nil
@@ -45,6 +43,7 @@ func New(capacity uint32, opts ...Opt) RingBuffer {
 	return rb
 }
 
+// WithDebugMode enables the internal debug mode for more logging output, and the metrics for debugging
 func WithDebugMode(debug bool) Opt {
 	return func(buf *ringBuf) {
 		buf.debugMode = debug
@@ -95,8 +94,8 @@ func (rb *ringBuf) Quantity() uint32 {
 
 func (rb *ringBuf) Size() uint32 {
 	var quantity uint32
-	// head = atomic.LoadUint32(&rb.head)
-	// tail = atomic.LoadUint32(&rb.tail)
+	// head = atomic.LoadUint32(&fast.head)
+	// tail = atomic.LoadUint32(&fast.tail)
 	var tail, head uint32
 	var quad uint64
 	quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
@@ -123,8 +122,8 @@ func (rb *ringBuf) IsEmpty() (b bool) {
 	head = (uint32)(quad & MaxUint32_64)
 	tail = (uint32)(quad >> 32)
 	// var tail, head uint32
-	// head = atomic.LoadUint32(&rb.head)
-	// tail = atomic.LoadUint32(&rb.tail)
+	// head = atomic.LoadUint32(&fast.head)
+	// tail = atomic.LoadUint32(&fast.tail)
 	b = head == tail
 	return
 }
@@ -136,8 +135,8 @@ func (rb *ringBuf) IsFull() (b bool) {
 	head = (uint32)(quad & MaxUint32_64)
 	tail = (uint32)(quad >> 32)
 	// var tail, head uint32
-	// head = atomic.LoadUint32(&rb.head)
-	// tail = atomic.LoadUint32(&rb.tail)
+	// head = atomic.LoadUint32(&fast.head)
+	// tail = atomic.LoadUint32(&fast.tail)
 	b = ((tail + 1) & rb.capModMask) == head
 	return
 }
@@ -158,106 +157,3 @@ func roundToPower2(v uint32) uint32 {
 	v++
 	return v
 }
-
-func initLoggerConsole(l zapcore.Level) *zap.Logger {
-	// alevel := zap.NewAtomicLevel()
-	// http.HandleFunc("/handle/level", alevel.ServeHTTP)
-	// logcfg.Level = alevel
-
-	logcfg := zap.NewDevelopmentConfig()
-	logcfg.Level = zap.NewAtomicLevelAt(l)
-	logcfg.EncoderConfig.EncodeCaller = zapcore.FullCallerEncoder
-	logger, _ := logcfg.Build()
-	return logger
-}
-
-func initLogger(logpath string, loglevel string) *zap.Logger {
-	hook := lumberjack.Logger{
-		Filename:   logpath, // ⽇志⽂件路径
-		MaxSize:    1024,    // megabytes
-		MaxBackups: 3,       // 最多保留3个备份
-		MaxAge:     7,       // days
-		Compress:   true,    // 是否压缩 disabled by default
-	}
-	w := zapcore.AddSync(&hook)
-
-	var level zapcore.Level
-	switch loglevel {
-	case "debug":
-		level = zap.DebugLevel
-	case "info":
-		level = zap.InfoLevel
-	case "error":
-		level = zap.ErrorLevel
-	default:
-		level = zap.InfoLevel
-	}
-
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderConfig),
-		w,
-		level,
-	)
-	logger := zap.New(core)
-	return logger
-}
-
-func init() {
-	// fmt.Printf("CacheLinePadSize = %v\n", CacheLinePadSize)
-	// fmt.Printf("ringBuf.Size = %v\n", unsafe.Sizeof(ringBuf{}))
-
-	// logger, _ := zap.NewProduction()
-	// logger, _ := zap.NewDevelopment()
-
-	initializedOnce.Do(func() {
-
-		ErrQueueFull = errors.New("queue full")
-		ErrQueueEmpty = errors.New("queue empty")
-		ErrRaced = errors.New("queue race")
-		atomic.CompareAndSwapUint32(&initialized, 0, 1)
-
-	})
-}
-
-func isInitialized() bool {
-	return atomic.LoadUint32(&initialized) == 1
-}
-
-var initializedOnce sync.Once
-var initialized uint32
-var ErrQueueFull error
-var ErrQueueEmpty error
-var ErrRaced error
-
-const CacheLinePadSize = unsafe.Sizeof(cpu.CacheLinePad{})
-
-// const MaxUint = ^uint(0)
-// const MinUint = 0
-//
-// const MaxUint16 = ^uint16(0)
-// const MinUint16 = 0
-
-const MaxUint32_64 = (uint64)(^uint32(0))
-
-// const MaxUint32 = ^uint32(0)
-// const MinUint32 = 0
-//
-// const MaxUint64 = ^uint64(0)
-// const MinUint64 = 0
-//
-// const MaxInt = int(MaxUint >> 1)
-// const MinInt = -MaxInt - 1
-//
-// const IntMAX = int(^uint(0) >> 1)
-// const Int64MAX = int64(2) ^ 64 - 1
-//
-// const MaxInt16 = int(MaxUint16 >> 1)
-// const MinInt16 = -MaxInt16 - 1
-//
-// const MaxInt32 = int(MaxUint32 >> 1)
-// const MinInt32 = -MaxInt32 - 1
-//
-// const MaxInt64 = int(MaxUint64 >> 1)
-// const MinInt64 = -MaxInt64 - 1

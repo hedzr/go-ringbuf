@@ -2,13 +2,13 @@
  * Copyright © 2019 Hedzr Yeh.
  */
 
-package socketlib
+package ringbuf
 
 const (
 	// AppName const
-	AppName = "socketlib"
+	AppName = "ringbuf"
 	// Version const
-	Version = "1.0.1"
+	Version = "0.7.1"
 	// VersionInt const
-	VersionInt = 0x010001
+	VersionInt = 0x000701
 )

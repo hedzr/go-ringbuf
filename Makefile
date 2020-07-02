@@ -395,9 +395,15 @@ gocov: coverage
 ## coverage: run go coverage test
 coverage: | $(GOBASE)
 	@echo "  >  gocov ..."
-	@$(GO) test -v -race -coverprofile=coverage.txt -covermode=atomic | tee coverage.log
-	@GOPATH=$(GOPATH) GOBIN=$(BIN) GO111MODULE=$(GO111MODULE) GOPROXY=$(GOPROXY) \
-	go tool cover -html=coverage.txt -o cover.html
+	@$(GO) test ./... -v -race -coverprofile=coverage.txt -covermode=atomic -timeout=20m -test.short | tee coverage.log
+	@$(GO) tool cover -html=coverage.txt -o cover.html
+	@open cover.html
+
+## coverage-full: run go coverage test (with the long tests)
+coverage-full: | $(GOBASE)
+	@echo "  >  gocov ..."
+	@$(GO) test ./... -v -race -coverprofile=coverage.txt -covermode=atomic -timeout=20m | tee coverage.log
+	@$(GO) tool cover -html=coverage.txt -o cover.html
 	@open cover.html
 
 ## codecov: run go test for codecov; (codecov.io)
@@ -412,12 +418,19 @@ cyclo: | $(GOBASE) $(GOCYCLO)
 	@GOPATH=$(GOPATH) GO111MODULE=$(GO111MODULE) GOPROXY=$(GOPROXY) \
 	$(GOCYCLO) -top 20 .
 
-## bench: benchmark test
-bench:
+## bench-std: benchmark test
+bench-std:
 	@echo "  >  benchmark testing ..."
 	@$(GO) test -bench="." -run=^$ -benchtime=10s ./...
 	# go test -bench "." -run=none -test.benchtime 10s
 	# todo: go install golang.org/x/perf/cmd/benchstat
+
+
+## bench: benchmark test
+bench:
+	@echo "  >  benchmark testing (manually) ..."
+	@$(GO) test ./fast -v -race -run 'TestQueuePutGetLong' -timeout=20m
+
 
 ## linux-test: call ci/linux_test/Makefile
 linux-test:
