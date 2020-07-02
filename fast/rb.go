@@ -20,6 +20,7 @@ type (
 		Size() uint32
 		IsEmpty() (b bool)
 		IsFull() (b bool)
+		Reset()
 	}
 
 	// RingBuffer interface provides a set of standard ring buffer operations
@@ -106,6 +107,11 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 			err = ErrQueueFull
 			return
 		}
+		isEmpty := head == tail
+		if isEmpty && head == MaxUint32 {
+			err = ErrQueueNotReady
+			return
+		}
 
 		holder = &rb.data[tail]
 
@@ -149,6 +155,10 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 
 		isEmpty := head == tail
 		if isEmpty {
+			if head == MaxUint32 {
+				err = ErrQueueNotReady
+				return
+			}
 			err = ErrQueueEmpty
 			return
 		}

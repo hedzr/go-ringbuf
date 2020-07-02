@@ -48,6 +48,13 @@ func WithDebugMode(debug bool) Opt {
 	}
 }
 
+// WithLogger setup a logger
+func WithLogger(logger Logger) Opt {
+	return func(buf *ringBuf) {
+		buf.logger = logger
+	}
+}
+
 // Dbg exposes some internal fields for debugging
 type Dbg interface {
 	GetGetWaits() uint64
@@ -137,6 +144,15 @@ func (rb *ringBuf) IsFull() (b bool) {
 	// tail = atomic.LoadUint32(&fast.tail)
 	b = ((tail + 1) & rb.capModMask) == head
 	return
+}
+
+// Reset will clear the whole queue, but it might be unsafe in SMP runtime environment.
+func (rb *ringBuf) Reset() {
+	atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), MaxUint64)
+	for i := 0; i < (int)(rb.cap); i++ {
+		rb.data[i].readWrite = 0 // bit 0: readable, bit 1: writable
+	}
+	atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), 0)
 }
 
 func (rb *ringBuf) Debug(enabled bool) (lastState bool) {
