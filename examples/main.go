@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/hedzr/ringbuf/fast"
+	"github.com/hedzr/go-ringbuf/fast"
 	"log"
 )
 

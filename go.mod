@@ -1,4 +1,4 @@
-module github.com/hedzr/ringbuf
+module github.com/hedzr/go-ringbuf
 
 go 1.13
 

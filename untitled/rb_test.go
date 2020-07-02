@@ -6,7 +6,7 @@ package untitled_test
 
 import (
 	"bytes"
-	"github.com/hedzr/ringbuf/untitled"
+	"github.com/hedzr/go-ringbuf/untitled"
 	"io"
 	"testing"
 )
