@@ -86,6 +86,9 @@ var ErrQueueEmpty error
 // ErrRaced the exception raised if data racing
 var ErrRaced error
 
+// ErrQueueNotReady queue not ready for enqueue or dequeue
+var ErrQueueNotReady error
+
 // CacheLinePadSize represents the CPU Cache Line Padding Size, compliant with the current running CPU Architect
 const CacheLinePadSize = unsafe.Sizeof(cpu.CacheLinePad{})
 
@@ -98,7 +101,12 @@ const CacheLinePadSize = unsafe.Sizeof(cpu.CacheLinePad{})
 // MaxUint32_64 represents the maximal uint32 value
 const MaxUint32_64 = (uint64)(^uint32(0))
 
-// const MaxUint32 = ^uint32(0)
+// MaxUint64 represents the maximal uint64 value
+const MaxUint64 = ^uint64(0)
+
+// MaxUint32 represents the maximal uint32 value
+const MaxUint32 = ^uint32(0)
+
 // const MinUint32 = 0
 //
 // const MaxUint64 = ^uint64(0)
