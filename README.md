@@ -26,7 +26,7 @@ go get -v github.com/hedzr/go-ringbuf
 ### Import
 
 ```go
-import "github.com/hedzr/ringbuf/fast"
+import "github.com/hedzr/go-ringbuf/fast"
 
 func main() {
 	var err error
