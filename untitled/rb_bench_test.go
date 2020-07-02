@@ -2,10 +2,10 @@
  * Copyright © 2020 Hedzr Yeh.
  */
 
-package ringbuf_test
+package untitled_test
 
 import (
-	"github.com/hedzr/ringbuf/ringbuf"
+	"github.com/hedzr/ringbuf/untitled"
 	"testing"
 )
 
@@ -33,7 +33,7 @@ func BenchmarkRingBuffer_Write(b *testing.B) {
 func singleTest(inputs [][]byte, t *testing.B) (totalWritten int64) {
 	// Write a bunch of data
 
-	buf, err := ringbuf.NewBuffer(4)
+	buf, err := untitled.NewBuffer(4)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}

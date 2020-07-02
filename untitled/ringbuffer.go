@@ -2,7 +2,7 @@
  * Copyright © 2020 Hedzr Yeh.
  */
 
-package ringbuf
+package untitled
 
 import "errors"
 
@@ -17,6 +17,7 @@ type RingBuffer struct {
 	overflowHandler OverflowHandler
 }
 
+// RingBufferOption gives the options prototypes for NewBuffer()
 type RingBufferOption func(*RingBuffer)
 
 // NewBuffer creates a new buffer of a given size. The size

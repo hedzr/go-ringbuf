@@ -2,21 +2,21 @@
  * Copyright © 2020 Hedzr Yeh.
  */
 
-package ringbuf_test
+package untitled_test
 
 import (
 	"bytes"
-	"github.com/hedzr/ringbuf/ringbuf"
+	"github.com/hedzr/ringbuf/untitled"
 	"io"
 	"testing"
 )
 
 func TestBuffer_Impl(t *testing.T) {
-	var _ io.Writer = &ringbuf.RingBuffer{}
+	var _ io.Writer = &untitled.RingBuffer{}
 }
 
 func TestBuffer_ShortWrite(t *testing.T) {
-	buf, err := ringbuf.NewBuffer(1024)
+	buf, err := untitled.NewBuffer(1024)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestBuffer_ShortWrite(t *testing.T) {
 func TestBuffer_FullWrite(t *testing.T) {
 	inp := []byte("hello world")
 
-	buf, err := ringbuf.NewBuffer(int64(len(inp)))
+	buf, err := untitled.NewBuffer(int64(len(inp)))
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestBuffer_FullWrite(t *testing.T) {
 func TestBuffer_LongWrite(t *testing.T) {
 	inp := []byte("hello world")
 
-	buf, err := ringbuf.NewBuffer(6)
+	buf, err := untitled.NewBuffer(6)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestBuffer_LongWrite(t *testing.T) {
 func TestBuffer_HugeWrite(t *testing.T) {
 	inp := []byte("hello world")
 
-	buf, err := ringbuf.NewBuffer(3)
+	buf, err := untitled.NewBuffer(3)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestBuffer_HugeWrite(t *testing.T) {
 func TestBuffer_ManySmall(t *testing.T) {
 	inp := []byte("hello world")
 
-	buf, err := ringbuf.NewBuffer(3)
+	buf, err := untitled.NewBuffer(3)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestBuffer_MultiPart(t *testing.T) {
 	}
 	total := 0
 
-	buf, err := ringbuf.NewBuffer(16)
+	buf, err := untitled.NewBuffer(16)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestBuffer_Reset(t *testing.T) {
 		[]byte("my cool input\n"),
 	}
 
-	buf, err := ringbuf.NewBuffer(4)
+	buf, err := untitled.NewBuffer(4)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
