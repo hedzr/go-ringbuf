@@ -2,7 +2,7 @@ package fast
 
 import (
 	"fmt"
-	"go.uber.org/zap"
+	"gopkg.in/hedzr/errors.v2"
 	"io"
 	"sync/atomic"
 	"time"
@@ -57,7 +57,8 @@ type (
 		_          [CacheLinePadSize - 8 - 8 - 4*4]byte
 		data       []rbItem
 		debugMode  bool
-		logger     *zap.Logger
+		logger     Logger
+		//logger     *zap.Logger
 		// _         cpu.CacheLinePad
 	}
 
@@ -66,6 +67,14 @@ type (
 		value     interface{} // ptr
 		_         [CacheLinePadSize - 8 - 8]byte
 		// _         cpu.CacheLinePad
+	}
+
+	Logger interface {
+		Flush() error
+		Info(fmt string, args ...interface{})
+		Debug(fmt string, args ...interface{})
+		Warn(fmt string, args ...interface{})
+		Fatal(fmt string, args ...interface{})
 	}
 
 	ringer struct {
@@ -110,7 +119,8 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 	}
 
 	if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
-		err = fmt.Errorf("[W] %w, 2=>1, %v", ErrRaced, holder.readWrite)
+		//err = fmt.Errorf("[W] %w, 2=>1, %v", ErrRaced, holder.readWrite)
+		err = errors.New("[W] 2=>1, %v", holder.readWrite).Attach(ErrRaced)
 		return
 	}
 
@@ -182,17 +192,18 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 	// }
 
 	if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {
-		err = fmt.Errorf("[R] %w, 3=>0, %v", ErrRaced, holder.readWrite)
+		//err = fmt.Errorf("[R] %w, 3=>0, %v", ErrRaced, holder.readWrite)
+		err = errors.New("[R] 3=>0, %v", holder.readWrite).Attach(ErrRaced)
 		return
 	}
 
 	if item == nil {
 		err = fmt.Errorf("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
 
-		if !rb.debugMode {
-			rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
-		}
-		rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
+		//if !rb.debugMode {
+		//	rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
+		//}
+		//rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
 	}
 	return
 }
