@@ -13,6 +13,9 @@
 
 `go-ringbuf` provides a high-performance, lock-free circular queue (ring buffer) implementation in golang.
 
+MPMC (multiple-producers and multiple consumers) enabled.
+
+
 
 ## Getting Start
 
