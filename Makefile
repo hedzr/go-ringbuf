@@ -78,10 +78,12 @@ CN = hedzr/$(N)
 
 
 
-MAIN_APPS = ring-buffer-demo tcp-server tcp-client
-MAIN_BUILD_PKG = ./examples
+#MAIN_APPS = ring-buffer-demo tcp-server tcp-client
+#MAIN_BUILD_PKG = ./examples
 # MAIN_APPS = cli
 # MAIN_BUILD_PKG = .
+MAIN_APPS = examples
+MAIN_BUILD_PKG = .
 
 
 
@@ -150,92 +152,48 @@ build: compile
 
 ## build-win: build to windows executable, for LAN deploy manually.
 build-win:
-	@echo "  >  Building linux binary..."
-	@echo "  >  LDFLAGS = $(LDFLAGS)"
-	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(foreach os, windows, \
-	    echo "     Building $(GOBIN)/$(an)_$(os)_$(goarch)...$(os)"; \
-	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an)_$(os)_$(goarch).exe $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
-	    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	  ) \
-	)
-	#@ls -la $(LS_OPT) $(GOBIN)/*linux*
-	# -X '$(W_PKG).AppName=$(an)'
+	@-$(MAKE) -s go-build-task os=windows goarchset=amd64
 
 ## build-linux: build to linux executable, for LAN deploy manually.
 build-linux:
-	@echo "  >  Building linux binary..."
-	@echo "  >  LDFLAGS = $(LDFLAGS)"
-	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(foreach os, linux, \
-	    echo "     Building $(GOBIN)/$(an)_$(os)_$(goarch)...$(os)"; \
-	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an)_$(os)_$(goarch) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
-	    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	  ) \
-	)
-	#@ls -la $(LS_OPT) $(GOBIN)/*linux*
+	@-$(MAKE) -s go-build-task os=linux goarchset=amd64
 
 ## build-nacl: build to nacl executable, for LAN deploy manually.
 build-nacl:
 	# NOTE: can't build to nacl with golang 1.14 and darwin
-	@echo "  >  Building linux binary..."
-	@echo "  >  LDFLAGS = $(LDFLAGS)"
-	# unsupported GOOS/GOARCH pair nacl/386 ??
-	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(foreach os, nacl, \
-	  $(foreach goarch, 386 arm amd64p32, \
-	    echo "     >> Building $(GOBIN)/$(an)_$(os)_$(goarch)...$(os)" >/dev/null; \
-	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an)_$(os)_$(goarch) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
-	    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	    gzip -f $(GOBIN)/$(an)_$(os)_$(goarch); \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	) \
-	) \
-	)
-	#  @ls -la $(LS_OPT) $(GOBIN)/*linux*
-	#  -X '$(W_PKG).AppName=$(an)'
+	#    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch)*;
+	#    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*;
+	#    gzip -f $(GOBIN)/$(an)_$(os)_$(goarch);
+	#    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*;
+	@-$(MAKE) -s go-build-task os=nacl goarchset="386 arm amd64p32"
 	@echo "  < All Done."
 	@ls -la $(LS_OPT) $(GOBIN)/*
 
 
 ## build-plan9: build to plan9 executable, for LAN deploy manually.
+build-plan9: goarchset = "386 amd64"
 build-plan9:
-	@echo "  >  Building linux binary..."
-	@echo "  >  LDFLAGS = $(LDFLAGS)"
-	# unsupported GOOS/GOARCH pair nacl/386 ??
-	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(foreach os, plan9, \
-	  $(foreach goarch, amd64, \
-	    echo "     >> Building $(GOBIN)/$(an)_$(os)_$(goarch)...$(os)" >/dev/null; \
-	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an)_$(os)_$(goarch) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
-	    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	) \
-	) \
-	)
-	#@ls -la $(LS_OPT) $(GOBIN)/*linux*
+	@-$(MAKE) -s go-build-task os=plan9 goarchset=$(goarchset)
 
 ## build-freebsd: build to freebsd executable, for LAN deploy manually.
 build-freebsd:
-	@echo "  >  Building linux binary..."
-	@echo "  >  LDFLAGS = $(LDFLAGS)"
+	@-$(MAKE) -s go-build-task os=freebsd goarchset=amd64
+
+## build-riscv: build to riscv64 executable, for LAN deploy manually.
+build-riscv:
+	@-$(MAKE) -s go-build-task os=linux goarchset=riscv64
+
+go-build-task:
+	@echo "  >  Building $(os)/$(goarchset) binary..."
+	@#echo "  >  LDFLAGS = $(LDFLAGS)"
 	# unsupported GOOS/GOARCH pair nacl/386 ??
 	$(foreach an, $(MAIN_APPS), \
 	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(foreach os, freebsd, \
-	  $(foreach goarch, amd64, \
+	  $(foreach goarch, $(goarchset), \
 	    echo "     >> Building $(GOBIN)/$(an)_$(os)_$(goarch)...$(os)" >/dev/null; \
 	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an)_$(os)_$(goarch) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
 	    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch)*; \
 	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	) \
 	) \
 	)
 	#@ls -la $(LS_OPT) $(GOBIN)/*linux*
@@ -243,19 +201,8 @@ build-freebsd:
 ## build-ci: run build-ci task. just for CI tools
 build-ci:
 	@echo "  >  Building binaries in CI flow..."
-	@echo "  >  LDFLAGS = $(LDFLAGS)"
-	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(foreach os, linux darwin windows, \
-	  $(foreach goarch, 386 amd64, \
-	    echo "     >> Building $(GOBIN)/$(an)_$(os)_$(goarch)...$(os)" >/dev/null; \
-	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an)_$(os)_$(goarch) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
-	    chmod +x $(GOBIN)/$(an)_$(os)_$(goarch); \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch); \
-	    gzip -f $(GOBIN)/$(an)_$(os)_$(goarch); \
-	    ls -la $(LS_OPT) $(GOBIN)/$(an)_$(os)_$(goarch)*; \
-	) \
-	) \
+	$(foreach os, linux darwin windows, \
+	  @-$(MAKE) -s go-build-task os=$(os) goarchset="386 amd64" \
 	)
 	@echo "  < All Done."
 	@ls -la $(LS_OPT) $(GOBIN)/*
