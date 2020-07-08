@@ -1,7 +1,6 @@
 PROJECTNAME1=$(shell basename "$(PWD)")
 PROJECTNAME=$(PROJECTNAME1:go-%=%)
 APPNAME=$(patsubst "%",%,$(shell grep -E "AppName[ \t]+=[ \t]+" doc.go|grep -Eo "\\\".+\\\""))
-APPNAME=$(patsubst "%",%,$(shell grep -E "AppName[ \t]+=[ \t]+" doc.go|grep -Eo "\\\".+\\\""))
 VERSION=$(shell grep -E "Version[ \t]+=[ \t]+" doc.go|grep -Eo "[0-9.]+")
 include .env
 -include .env.local
@@ -77,13 +76,6 @@ CN = hedzr/$(N)
 
 
 
-
-#MAIN_APPS = ring-buffer-demo tcp-server tcp-client
-#MAIN_BUILD_PKG = ./examples
-# MAIN_APPS = cli
-# MAIN_BUILD_PKG = .
-MAIN_APPS = examples
-MAIN_BUILD_PKG = .
 
 
 
@@ -240,7 +232,7 @@ go-build:
 	@echo "  >  Building binary '$(GOBIN)/$(APPNAME)'..."
 	# demo short wget-demo 
 	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  +race. APPNAME = $(APPNAME)|$(an), LDFLAGS = $(LDFLAGS)"; \
+	  echo "     +race. APPNAME = $(APPNAME)|$(an), LDFLAGS = $(LDFLAGS)"; \
 	  $(GO) build -v -race -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(an) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
 	  ls -la $(LS_OPT) $(GOBIN)/$(an); \
 	)
@@ -249,7 +241,7 @@ go-build:
 	# chmod +x $(GOBIN)/*
 
 go-generate:
-	@echo "  >  Generating dependency files ($(generate)) ..."
+	@echo "  >  Generating dependency files ('$(generate)') ..."
 	@$(GO) generate $(generate) ./...
 	# @echo "     done"
 
@@ -406,16 +398,21 @@ print-%:
 	@echo $* = $($*)
 
 info:
-	@echo "     GOBASE: $(GOBASE)"
-	@echo "      GOBIN: $(GOBIN)"
-	@echo "     GOROOT: $(GOROOT)"
-	@echo "     GOPATH: $(GOPATH)"
-	@echo "GO111MODULE: $(GO111MODULE)"
-	@echo "    GOPROXY: $(GOPROXY)"
-	@echo "PROJECTNAME: $(PROJECTNAME)"
-	@echo "    APPNAME: $(APPNAME)"
-	@echo "    VERSION: $(VERSION)"
-	@echo "  BUILDTIME: $(BUILDTIME)"
+	@echo "       GOBASE: $(GOBASE)"
+	@echo "        GOBIN: $(GOBIN)"
+	@echo "       GOROOT: $(GOROOT)"
+	@echo "       GOPATH: $(GOPATH)"
+	@echo "  GO111MODULE: $(GO111MODULE)"
+	@echo "      GOPROXY: $(GOPROXY)"
+	@echo "  PROJECTNAME: $(PROJECTNAME)"
+	@echo "      APPNAME: $(APPNAME)"
+	@echo "      VERSION: $(VERSION)"
+	@echo "    BUILDTIME: $(BUILDTIME)"
+	@echo
+	@echo "  GIT_VERSION: $(GIT_VERSION)"
+	@echo " GIT_REVISION: $(GIT_REVISION)"
+	@echo
+	@echo "   GO_VERSION: $(GOVERSION)"
 	@echo
 	@echo "export GO111MODULE=on"
 	@echo "export GOPROXY=$(GOPROXY)"
