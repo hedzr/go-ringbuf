@@ -51,11 +51,15 @@ type (
 		// isEmpty bool
 		cap        uint32
 		capModMask uint32
+		_          [CacheLinePadSize - 8]byte
 		head       uint32
+		_          [CacheLinePadSize - 4]byte
 		tail       uint32
+		_          [CacheLinePadSize - 4]byte
 		putWaits   uint64
+		_          [CacheLinePadSize - 8]byte
 		getWaits   uint64
-		_          [CacheLinePadSize - 8 - 8 - 4*4]byte
+		_          [CacheLinePadSize - 8]byte
 		data       []rbItem
 		debugMode  bool
 		logger     Logger
