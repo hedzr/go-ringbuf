@@ -20,6 +20,7 @@ func init() {
 		ErrQueueFull = errors.New("queue full")
 		ErrQueueEmpty = errors.New("queue empty")
 		ErrRaced = errors.New("queue race")
+		ErrQueueNotReady = errors.New("queue not ready")
 		atomic.CompareAndSwapUint32(&initialized, 0, 1)
 
 	})
