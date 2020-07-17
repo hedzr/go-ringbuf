@@ -94,12 +94,8 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 	var tail, head, nt uint32
 	var holder *rbItem
 	for {
-		var quad uint64
-		quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-		head = (uint32)(quad & MaxUint32_64)
-		tail = (uint32)(quad >> 32)
-		// head = atomic.LoadUint32(&fast.head)
-		// tail = atomic.LoadUint32(&fast.tail)
+		head = atomic.LoadUint32(&rb.head)
+		tail = atomic.LoadUint32(&rb.tail)
 		nt = (tail + 1) & rb.capModMask
 
 		isFull := nt == head
@@ -146,12 +142,12 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 	var tail, head, nh uint32
 	var holder *rbItem
 	for {
-		var quad uint64
-		quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-		head = (uint32)(quad & MaxUint32_64)
-		tail = (uint32)(quad >> 32)
-		// head = atomic.LoadUint32(&fast.head)
-		// tail = atomic.LoadUint32(&fast.tail)
+		//var quad uint64
+		//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
+		//head = (uint32)(quad & MaxUint32_64)
+		//tail = (uint32)(quad >> 32)
+		head = atomic.LoadUint32(&rb.head)
+		tail = atomic.LoadUint32(&rb.tail)
 
 		isEmpty := head == tail
 		if isEmpty {

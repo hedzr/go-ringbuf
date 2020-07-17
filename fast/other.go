@@ -2,7 +2,6 @@ package fast
 
 import (
 	"sync/atomic"
-	"unsafe"
 )
 
 // Opt interface the functional options
@@ -102,10 +101,12 @@ func (rb *ringBuf) Size() uint32 {
 	// head = atomic.LoadUint32(&fast.head)
 	// tail = atomic.LoadUint32(&fast.tail)
 	var tail, head uint32
-	var quad uint64
-	quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-	head = (uint32)(quad & MaxUint32_64)
-	tail = (uint32)(quad >> 32)
+	//var quad uint64
+	//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
+	//head = (uint32)(quad & MaxUint32_64)
+	//tail = (uint32)(quad >> 32)
+	head = atomic.LoadUint32(&rb.head)
+	tail = atomic.LoadUint32(&rb.tail)
 
 	if tail >= head {
 		quantity = tail - head
@@ -122,37 +123,39 @@ func (rb *ringBuf) Cap() uint32 {
 
 func (rb *ringBuf) IsEmpty() (b bool) {
 	var tail, head uint32
-	var quad uint64
-	quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-	head = (uint32)(quad & MaxUint32_64)
-	tail = (uint32)(quad >> 32)
-	// var tail, head uint32
-	// head = atomic.LoadUint32(&fast.head)
-	// tail = atomic.LoadUint32(&fast.tail)
+	//var quad uint64
+	//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
+	//head = (uint32)(quad & MaxUint32_64)
+	//tail = (uint32)(quad >> 32)
+	head = atomic.LoadUint32(&rb.head)
+	tail = atomic.LoadUint32(&rb.tail)
 	b = head == tail
 	return
 }
 
 func (rb *ringBuf) IsFull() (b bool) {
 	var tail, head uint32
-	var quad uint64
-	quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-	head = (uint32)(quad & MaxUint32_64)
-	tail = (uint32)(quad >> 32)
-	// var tail, head uint32
-	// head = atomic.LoadUint32(&fast.head)
-	// tail = atomic.LoadUint32(&fast.tail)
+	//var quad uint64
+	//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
+	//head = (uint32)(quad & MaxUint32_64)
+	//tail = (uint32)(quad >> 32)
+	head = atomic.LoadUint32(&rb.head)
+	tail = atomic.LoadUint32(&rb.tail)
 	b = ((tail + 1) & rb.capModMask) == head
 	return
 }
 
 // Reset will clear the whole queue, but it might be unsafe in SMP runtime environment.
 func (rb *ringBuf) Reset() {
-	atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), MaxUint64)
+	// atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), MaxUint64)
+	atomic.StoreUint32(&rb.head, MaxUint32)
+	atomic.StoreUint32(&rb.tail, MaxUint32)
 	for i := 0; i < (int)(rb.cap); i++ {
 		rb.data[i].readWrite = 0 // bit 0: readable, bit 1: writable
 	}
-	atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), 0)
+	//atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), 0)
+	atomic.StoreUint32(&rb.head, 0)
+	atomic.StoreUint32(&rb.tail, 0)
 }
 
 func (rb *ringBuf) Debug(enabled bool) (lastState bool) {
