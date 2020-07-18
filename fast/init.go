@@ -1,8 +1,8 @@
 package fast
 
 import (
-	"errors"
 	"golang.org/x/sys/cpu"
+	"gopkg.in/hedzr/errors.v2"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -24,6 +24,10 @@ func init() {
 		atomic.CompareAndSwapUint32(&initialized, 0, 1)
 
 	})
+}
+
+func isInitialized() bool {
+	return atomic.LoadUint32(&initialized) == 1
 }
 
 //func initLoggerConsole(l zapcore.Level) *zap.Logger {
@@ -70,10 +74,6 @@ func init() {
 //	logger := zap.New(core)
 //	return logger
 //}
-
-func isInitialized() bool {
-	return atomic.LoadUint32(&initialized) == 1
-}
 
 var initializedOnce sync.Once
 var initialized uint32

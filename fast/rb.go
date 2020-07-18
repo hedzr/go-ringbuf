@@ -125,7 +125,7 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 
 		holder.value = item
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
-			runtime.Gosched() // never happens
+			err = ErrRaced // runtime.Gosched() // never happens
 		}
 		// if fast.debugMode {
 		////log.Printf("[W] tail %v => %v, head: %v | ENQUEUED value = %v", tail, nt, head, item)
@@ -176,7 +176,7 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 		item = holder.value
 		holder.value = 0
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {
-			runtime.Gosched() // never happens
+			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
 		// if fast.debugMode {
@@ -185,15 +185,15 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 
 		if item == nil {
 			err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
-
-			//if !rb.debugMode {
-			//	rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
-			//}
-			//rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
-
-			//} else {
-			//	// log.Printf("<< %v DEQUEUED, %v => %v, tail: %v", item, head, nh, tail)
 		}
+
+		//if !rb.debugMode {
+		//	rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
+		//}
+		//rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
+
+		//} else {
+		//	// log.Printf("<< %v DEQUEUED, %v => %v, tail: %v", item, head, nh, tail)
 		return
 	}
 }
