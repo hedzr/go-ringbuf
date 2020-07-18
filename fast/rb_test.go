@@ -2,6 +2,7 @@ package fast
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -12,6 +13,210 @@ import (
 
 const N = 100
 const NLtd = 16
+
+// from #1
+func TestRbQueue(t *testing.T) {
+	size := roundUpToPower2(8)
+	q := &ringBuf{
+		data:       make([]rbItem, size),
+		head:       0,
+		tail:       0,
+		cap:        size,
+		capModMask: size - 1,
+	}
+
+	var (
+		w    sync.WaitGroup
+		get  uint32
+		put  uint32
+		num  = 4
+		jump = 100000
+	)
+
+	w.Add(num)
+	go func() {
+		for i := 0; i < num; i++ {
+			go func() {
+				defer w.Done()
+
+				var val int
+				for {
+					e := q.Put(val)
+					for e != nil {
+						time.Sleep(time.Millisecond)
+						e = q.Put(val)
+					}
+					atomic.AddUint32(&put, 1)
+					val++
+					if val == jump {
+						break
+					}
+				}
+			}()
+		}
+	}()
+
+	w.Add(num)
+	go func() {
+		for i := 0; i < num; i++ {
+			go func() {
+				defer w.Done()
+
+				var val int
+				for {
+					_, e := q.Get()
+					for e != nil {
+						time.Sleep(time.Millisecond)
+						_, e = q.Get()
+					}
+					atomic.AddUint32(&get, 1)
+					val++
+					if val == jump {
+						break
+					}
+				}
+			}()
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			<-ticker.C
+
+			head := atomic.LoadUint32(&q.head)
+			tail := atomic.LoadUint32(&q.tail)
+			full := (tail+1)&q.capModMask == head
+			empty := tail == head
+			var quantity uint32
+			if tail >= head {
+				quantity = tail - head
+			} else {
+				quantity = q.capModMask + (tail - head)
+			}
+			fmt.Printf("put: %d; get: %d; full: %t; empty: %t; size: %d; head: %d; tail: %d \n",
+				atomic.LoadUint32(&put), atomic.LoadUint32(&get),
+				full, empty, quantity, head, tail)
+
+			//for i := range q.data {
+			//	fmt.Printf("status: %d; value: %v \n", q.data[i].readWrite, q.data[i].value)
+			//}
+		}
+	}()
+
+	w.Wait()
+}
+
+const NCpus = 4
+
+func TestRbQueue2(t *testing.T) {
+	runtime.GOMAXPROCS(NCpus)
+
+	size := roundUpToPower2(4)
+	t.Logf("start, size = %v", size)
+	q := &ringBuf{
+		data:       make([]rbItem, size),
+		head:       0,
+		tail:       0,
+		cap:        size,
+		capModMask: size - 1,
+	}
+
+	var (
+		w    sync.WaitGroup
+		get  uint32
+		put  uint32
+		num  = NCpus * 2
+		jump = uint32(10009)
+	)
+
+	w.Add(num)
+	go func() {
+		for i := 0; i < num; i++ {
+			go func(i int) {
+				defer w.Done()
+
+				// var val int
+				for {
+					val := atomic.AddUint32(&put, 1)
+					e := q.Put(val)
+					for e != nil {
+						if e != ErrQueueFull {
+							log.Printf("put #%d e = %v", i, e)
+						}
+						time.Sleep(time.Millisecond)
+						e = q.Put(val)
+					}
+					//log.Printf("setter #%d: v = %v", i, val)
+					if val > jump {
+						break
+					}
+				}
+
+				log.Printf("put #%d done", i)
+			}(i)
+		}
+	}()
+
+	w.Add(num)
+	go func() {
+		for i := 0; i < num; i++ {
+			go func(i int) {
+				defer w.Done()
+				time.Sleep(300 * time.Millisecond)
+
+				//var val uint32
+				for {
+					v, e := q.Get()
+					for e != nil {
+						if e != ErrQueueEmpty {
+							log.Printf("get #%d e = %v , v %v", i, e, v)
+						}
+						time.Sleep(time.Millisecond)
+						v, e = q.Get()
+					}
+					//log.Printf("<< %v got in getter #%d. total got: %v", v, i, get)
+					// val++
+					if atomic.AddUint32(&get, 1) >= jump {
+						break
+					}
+				}
+				log.Printf("get #%d done", i)
+			}(i)
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			<-ticker.C
+
+			head := atomic.LoadUint32(&q.head)
+			tail := atomic.LoadUint32(&q.tail)
+			full := (tail+1)&q.capModMask == head
+			empty := tail == head
+			var quantity uint32
+			if tail >= head {
+				quantity = tail - head
+			} else {
+				quantity = q.capModMask + (tail - head)
+			}
+			log.Printf("put: %d; get: %d; full: %t; empty: %t; size: %d; head: %d; tail: %d \n",
+				atomic.LoadUint32(&put), atomic.LoadUint32(&get),
+				full, empty, quantity, head, tail)
+
+			//for i := range q.data {
+			//	fmt.Printf("status: %d; value: %v \n", q.data[i].readWrite, q.data[i].value)
+			//}
+		}
+	}()
+
+	w.Wait()
+}
 
 func TestRingBuf_Put_OneByOne(t *testing.T) {
 	var err error
@@ -53,7 +258,7 @@ func TestRingBuf_Put_OneByOne(t *testing.T) {
 
 //
 // go test ./... -race -run '^TestRingBuf_Put_Randomized$'
-// go test ./ringbuf/fast -race -run '^TestRingBuf_Put_R.*'
+// go test ./fast -race -run '^TestRingBuf_Put_R.*'
 //
 func TestRingBuf_Put_Randomized(t *testing.T) {
 	var maxN = NLtd * 1000

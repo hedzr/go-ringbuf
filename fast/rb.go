@@ -1,12 +1,10 @@
 package fast
 
 import (
-	"fmt"
 	"gopkg.in/hedzr/errors.v2"
 	"io"
+	"runtime"
 	"sync/atomic"
-	"time"
-	"unsafe"
 )
 
 type (
@@ -115,26 +113,25 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 
 		holder = &rb.data[tail]
 
-		if atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) {
-			holder.value = item
-			atomic.CompareAndSwapUint32(&rb.tail, tail, nt)
-			break
+		atomic.CompareAndSwapUint32(&rb.tail, tail, nt)
+	retry:
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) {
+			if atomic.LoadUint64(&holder.readWrite) == 0 {
+				goto retry // sometimes, short circuit
+			}
+			runtime.Gosched() // time to time
+			continue
 		}
 
-		time.Sleep(1 * time.Nanosecond)
-		atomic.AddUint64(&rb.putWaits, 1)
-	}
-
-	if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
-		//err = fmt.Errorf("[W] %w, 2=>1, %v", ErrRaced, holder.readWrite)
-		err = errors.New("[W] 2=>1, %v", holder.readWrite).Attach(ErrRaced)
+		holder.value = item
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
+			runtime.Gosched() // never happens
+		}
+		// if fast.debugMode {
+		////log.Printf("[W] tail %v => %v, head: %v | ENQUEUED value = %v", tail, nt, head, item)
+		// }
 		return
 	}
-
-	// if fast.debugMode {
-	// 	fast.logger.Debug("[ringbuf][PUT] ", zap.Uint32("cap", fast.cap), zap.Uint32("qty", fast.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("new tail", nt), zap.Uint32("head", head))
-	// }
-	return
 }
 
 func (rb *ringBuf) Get() (item interface{}, err error) {
@@ -165,56 +162,38 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 
 		holder = &rb.data[head]
 
-		if atomic.CompareAndSwapUint64(&holder.readWrite, 1, 3) {
-			// cnt := 0
-			// for {
-			// 	item = holder.value
-			// 	nh = (head + 1) & fast.capModMask
-			// 	if atomic.CompareAndSwapUint32(&fast.head, head, nh) {
-			// 		break
-			// 	}
-			//
-			// 	// err = fmt.Errorf("[R] %w, head: %v=>%v", ErrRaced, head, nh)
-			// 	// return
-			//
-			// 	time.Sleep(1 * time.Nanosecond)
-			// 	atomic.AddUint64(&fast.getWaits, 1)
-			//
-			// 	cnt++
-			// 	if cnt > 100 {
-			// 		atomic.CompareAndSwapUint64(&holder.readWrite, 3, 1)
-			// 		err = fmt.Errorf("[R] %w, head: %v => %v, tail: %v, 100 retried/getWaits=%v", ErrRaced, head, nh, tail, fast.getWaits)
-			// 		return
-			// 	}
-			// }
-
-			item = holder.value
-			nh = (head + 1) & rb.capModMask
-			atomic.CompareAndSwapUint32(&rb.head, head, nh)
-			break
+		nh = (head + 1) & rb.capModMask
+		atomic.CompareAndSwapUint32(&rb.head, head, nh)
+	retry:
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 3) {
+			if atomic.LoadUint64(&holder.readWrite) == 1 {
+				goto retry // sometimes, short circuit
+			}
+			runtime.Gosched() // time to time
+			continue
 		}
 
-		time.Sleep(1 * time.Nanosecond)
-		atomic.AddUint64(&rb.getWaits, 1)
-	}
+		item = holder.value
+		holder.value = 0
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {
+			runtime.Gosched() // never happens
+		}
 
-	// if fast.debugMode {
-	// 	fast.logger.Debug("[ringbuf][GET] ", zap.Uint32("cap", fast.cap), zap.Uint32("qty", fast.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
-	// }
+		// if fast.debugMode {
+		// 	fast.logger.Debug("[ringbuf][GET] ", zap.Uint32("cap", fast.cap), zap.Uint32("qty", fast.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
+		// }
 
-	if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {
-		//err = fmt.Errorf("[R] %w, 3=>0, %v", ErrRaced, holder.readWrite)
-		err = errors.New("[R] 3=>0, %v", holder.readWrite).Attach(ErrRaced)
+		if item == nil {
+			err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
+
+			//if !rb.debugMode {
+			//	rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
+			//}
+			//rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
+
+			//} else {
+			//	// log.Printf("<< %v DEQUEUED, %v => %v, tail: %v", item, head, nh, tail)
+		}
 		return
 	}
-
-	if item == nil {
-		err = fmt.Errorf("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
-
-		//if !rb.debugMode {
-		//	rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
-		//}
-		//rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
-	}
-	return
 }
