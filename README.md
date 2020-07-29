@@ -15,7 +15,11 @@
 
 MPMC (multiple-producers and multiple consumers) enabled.
 
+## History
 
+WIP:
+ - english documentation not completed yet
+ - documentation at: https:
 
 ## Getting Start
 
