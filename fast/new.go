@@ -1,5 +1,9 @@
 package fast
 
+import (
+	"github.com/hedzr/log"
+)
+
 // New returns the RingBuffer object
 func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 	if isInitialized() {
@@ -22,7 +26,7 @@ func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 		}
 
 		if rb.debugMode && rb.logger != nil {
-			//	rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
+			// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
 		}
 
 		for i := 0; i < (int)(size); i++ {
@@ -43,7 +47,7 @@ func WithDebugMode(debug bool) Opt {
 }
 
 // WithLogger setup a logger
-func WithLogger(logger Logger) Opt {
+func WithLogger(logger log.Logger) Opt {
 	return func(buf *ringBuf) {
 		buf.logger = logger
 	}

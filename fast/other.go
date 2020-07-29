@@ -27,7 +27,7 @@ func (rb *ringBuf) ResetCounters() {
 
 func (rb *ringBuf) Close() (err error) {
 	if rb.logger != nil {
-		err = rb.logger.Flush()
+		// err = rb.logger.Flush()
 		rb.logger = nil
 	}
 	return
@@ -37,7 +37,7 @@ func (rb *ringBuf) qty(head, tail uint32) (quantity uint32) {
 	if tail >= head {
 		quantity = tail - head
 	} else {
-		quantity = rb.capModMask + (tail - head)
+		quantity = rb.cap + (tail - head)
 	}
 	return
 }
@@ -56,14 +56,7 @@ func (rb *ringBuf) Size() (quantity uint32) {
 	//tail = (uint32)(quad >> 32)
 	head = atomic.LoadUint32(&rb.head)
 	tail = atomic.LoadUint32(&rb.tail)
-
-	if tail >= head {
-		quantity = tail - head
-	} else {
-		quantity = rb.capModMask + (tail - head)
-	}
-
-	return
+	return rb.qty(head, tail)
 }
 
 func (rb *ringBuf) Cap() uint32 {

@@ -2,7 +2,7 @@ package fast
 
 import (
 	"fmt"
-	"log"
+	log2 "log"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -144,18 +144,18 @@ func TestRbQueue2(t *testing.T) {
 					e := q.Put(val)
 					for e != nil {
 						if e != ErrQueueFull {
-							log.Printf("put #%d e = %v", i, e)
+							log2.Printf("put #%d e = %v", i, e)
 						}
 						time.Sleep(time.Millisecond)
 						e = q.Put(val)
 					}
-					//log.Printf("setter #%d: v = %v", i, val)
+					//log2.Printf("setter #%d: v = %v", i, val)
 					if val > jump {
 						break
 					}
 				}
 
-				log.Printf("put #%d done", i)
+				log2.Printf("put #%d done", i)
 			}(i)
 		}
 	}()
@@ -172,18 +172,18 @@ func TestRbQueue2(t *testing.T) {
 					v, e := q.Get()
 					for e != nil {
 						if e != ErrQueueEmpty {
-							log.Printf("get #%d e = %v , v %v", i, e, v)
+							log2.Printf("get #%d e = %v , v %v", i, e, v)
 						}
 						time.Sleep(time.Millisecond)
 						v, e = q.Get()
 					}
-					//log.Printf("<< %v got in getter #%d. total got: %v", v, i, get)
+					//log2.Printf("<< %v got in getter #%d. total got: %v", v, i, get)
 					// val++
 					if atomic.AddUint32(&get, 1) >= jump {
 						break
 					}
 				}
-				log.Printf("get #%d done", i)
+				log2.Printf("get #%d done", i)
 			}(i)
 		}
 	}()
@@ -205,7 +205,7 @@ func TestRbQueue2(t *testing.T) {
 			} else {
 				quantity = q.capModMask + (tail - head)
 			}
-			log.Printf("put: %d; get: %d; full: %t; empty: %t; size: %d; head: %d; tail: %d \n",
+			log2.Printf("put: %d; get: %d; full: %t; empty: %t; size: %d; head: %d; tail: %d \n",
 				atomic.LoadUint32(&put), atomic.LoadUint32(&get),
 				full, empty, quantity, head, tail)
 

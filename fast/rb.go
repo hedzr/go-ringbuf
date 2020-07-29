@@ -1,6 +1,7 @@
 package fast
 
 import (
+	"github.com/hedzr/log"
 	"gopkg.in/hedzr/errors.v2"
 	"io"
 	"runtime"
@@ -60,7 +61,7 @@ type (
 		_          [CacheLinePadSize - 8]byte
 		data       []rbItem
 		debugMode  bool
-		logger     Logger
+		logger     log.Logger
 		//logger     *zap.Logger
 		// _         cpu.CacheLinePad
 	}
@@ -72,14 +73,14 @@ type (
 		// _         cpu.CacheLinePad
 	}
 
-	// Logger interface fo ringBuf
-	Logger interface {
-		Flush() error
-		Info(fmt string, args ...interface{})
-		Debug(fmt string, args ...interface{})
-		Warn(fmt string, args ...interface{})
-		Fatal(fmt string, args ...interface{})
-	}
+	//// Logger interface fo ringBuf
+	//Logger interface {
+	//	Flush() error
+	//	Info(fmt string, args ...interface{})
+	//	Debug(fmt string, args ...interface{})
+	//	Warn(fmt string, args ...interface{})
+	//	Fatal(fmt string, args ...interface{})
+	//}
 
 	ringer struct {
 		cap uint32
@@ -127,9 +128,9 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
-		// if fast.debugMode {
-		////log.Printf("[W] tail %v => %v, head: %v | ENQUEUED value = %v", tail, nt, head, item)
-		// }
+		if rb.debugMode && rb.logger != nil {
+			rb.logger.Printf("[W] tail %v => %v, head: %v | ENQUEUED value = %v", tail, nt, head, item)
+		}
 		return
 	}
 }
@@ -179,9 +180,9 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		// if fast.debugMode {
-		// 	fast.logger.Debug("[ringbuf][GET] ", zap.Uint32("cap", fast.cap), zap.Uint32("qty", fast.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
-		// }
+		if rb.debugMode && rb.logger != nil {
+			rb.logger.Debugf("[ringbuf][GET] cap=%v, qty=%v, tail=%v, head=%v, new head=%v", rb.Cap(), rb.qty(head, tail), tail, head, nh)
+		}
 
 		if item == nil {
 			err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)

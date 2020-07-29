@@ -1,34 +1,15 @@
 package fast
 
 import (
-	"log"
+	"github.com/hedzr/log"
+	log2 "log"
 	"testing"
 )
 
-type ll struct{}
-
-func (l *ll) Flush() error {
-	return nil
-}
-
-func (l *ll) Info(fmt string, args ...interface{}) {
-	log.Printf(fmt, args...)
-}
-
-func (l *ll) Debug(fmt string, args ...interface{}) {
-	log.Printf(fmt, args...)
-}
-
-func (l *ll) Warn(fmt string, args ...interface{}) {
-	log.Printf(fmt, args...)
-}
-
-func (l *ll) Fatal(fmt string, args ...interface{}) {
-	log.Fatalf(fmt, args...)
-}
-
 func TestResets(t *testing.T) {
-	logger := &ll{}
+	logger := log.NewDummyLogger()
+
+	log2.Printf("")
 
 	rb := New(NLtd,
 		WithDebugMode(true),
@@ -46,4 +27,78 @@ func TestResets(t *testing.T) {
 	x.tail = MaxUint32
 	_ = rb.Put(3)
 	_, _ = rb.Get()
+}
+
+func checkerr(t *testing.T, err error) {
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+}
+
+func checkqty(t *testing.T, rb1 *ringBuf, expect uint32) {
+	if rb1.Quantity() != rb1.qty(rb1.head, rb1.tail) || rb1.Quantity() != expect {
+		t.Fatalf("qty = %v / %v | expected: %v | WRONG!!", rb1.Quantity(), rb1.qty(rb1.head, rb1.tail), expect)
+	} else {
+		t.Logf("qty = %v / %v | expected: %v", rb1.Quantity(), rb1.qty(rb1.head, rb1.tail), expect)
+	}
+}
+
+func TestRoundedQty(t *testing.T) {
+	rb := New(4)
+	rb1 := rb.(*ringBuf)
+
+	var err error
+
+	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
+		t.Fatal("expect empty event")
+	}
+
+	err = rb.Enqueue(1)
+	checkerr(t, err)
+	checkqty(t, rb1, 1)
+
+	err = rb.Enqueue(2)
+	checkerr(t, err)
+	checkqty(t, rb1, 2)
+
+	err = rb.Enqueue(3)
+	checkerr(t, err)
+	checkqty(t, rb1, 3)
+
+	if err = rb.Enqueue(3); err != ErrQueueFull {
+		t.Fatal("expect full event")
+	}
+
+	_, err = rb.Dequeue()
+	checkerr(t, err)
+	checkqty(t, rb1, 2)
+
+	err = rb.Enqueue(4)
+	// t.Log(rb1.qty(rb1.head, rb1.tail))  // wanted: 3
+	checkerr(t, err)
+	checkqty(t, rb1, 3)
+
+	_, err = rb.Dequeue()
+	checkerr(t, err)
+	checkqty(t, rb1, 2)
+
+	err = rb.Enqueue(5)
+	checkerr(t, err)
+	checkqty(t, rb1, 3)
+
+	_, err = rb.Dequeue()
+	checkerr(t, err)
+	checkqty(t, rb1, 2)
+
+	_, err = rb.Dequeue()
+	checkerr(t, err)
+	checkqty(t, rb1, 1)
+
+	_, err = rb.Dequeue()
+	checkerr(t, err)
+	checkqty(t, rb1, 0)
+
+	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
+		t.Fatal("expect empty event")
+	}
 }
