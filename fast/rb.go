@@ -1,9 +1,11 @@
 package fast
 
 import (
+	"fmt"
 	"github.com/hedzr/log"
 	"gopkg.in/hedzr/errors.v2"
 	"io"
+	"net"
 	"runtime"
 	"sync/atomic"
 )
@@ -129,7 +131,8 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 		if rb.debugMode && rb.logger != nil {
-			rb.logger.Printf("[W] tail %v => %v, head: %v | ENQUEUED value = %v", tail, nt, head, item)
+			rb.logger.Debugf("[W] tail %v => %v, head: %v | ENQUEUED value = %v | [0]=%v, [1]=%v",
+				tail, nt, head, toString(holder.value), toString(rb.data[0].value), toString(rb.data[1].value))
 		}
 		return
 	}
@@ -181,7 +184,7 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 		}
 
 		if rb.debugMode && rb.logger != nil {
-			rb.logger.Debugf("[ringbuf][GET] cap=%v, qty=%v, tail=%v, head=%v, new head=%v", rb.Cap(), rb.qty(head, tail), tail, head, nh)
+			rb.logger.Debugf("[ringbuf][GET] cap=%v, qty=%v, tail=%v, head=%v, new head=%v, item=%v", rb.Cap(), rb.qty(head, tail), tail, head, nh, toString(item))
 		}
 
 		if item == nil {
@@ -197,4 +200,22 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 		//	// log.Printf("<< %v DEQUEUED, %v => %v, tail: %v", item, head, nh, tail)
 		return
 	}
+}
+
+func toString(i interface{}) (sz string) {
+	if s, ok := i.(string); ok {
+		sz = s
+	} else if s, ok := i.([]byte); ok {
+		sz = string(s)
+	} else if s, ok := i.(*rbItem); ok {
+		sz = toString(s.value)
+	} else if s, ok := i.(*struct {
+		RemoteAddr *net.UDPAddr
+		Data       []byte
+	}); ok {
+		sz = string(s.Data)
+	} else {
+		sz = fmt.Sprintf("%v", i)
+	}
+	return
 }

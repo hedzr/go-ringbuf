@@ -43,13 +43,22 @@ func checkqty(t *testing.T, rb1 *ringBuf, expect uint32) {
 	}
 }
 
+func checkresult(t *testing.T, rb1 *ringBuf, got interface{}, expect int) {
+	if g, ok := got.(int); ok && g == expect {
+		t.Logf("got = %v / %v | expected: %v", got, g, expect)
+	} else {
+		t.Fatalf("got = %v / %v | expected: %v | WRONG!!", got, g, expect)
+	}
+}
+
 func TestRoundedQty(t *testing.T) {
 	rb := New(4)
 	rb1 := rb.(*ringBuf)
 
 	var err error
+	var it interface{}
 
-	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
+	if it, err = rb.Dequeue(); err != ErrQueueEmpty {
 		t.Fatal("expect empty event")
 	}
 
@@ -69,34 +78,39 @@ func TestRoundedQty(t *testing.T) {
 		t.Fatal("expect full event")
 	}
 
-	_, err = rb.Dequeue()
+	it, err = rb.Dequeue()
 	checkerr(t, err)
 	checkqty(t, rb1, 2)
+	checkresult(t, rb1, it, 1)
 
 	err = rb.Enqueue(4)
 	// t.Log(rb1.qty(rb1.head, rb1.tail))  // wanted: 3
 	checkerr(t, err)
 	checkqty(t, rb1, 3)
 
-	_, err = rb.Dequeue()
+	it, err = rb.Dequeue()
 	checkerr(t, err)
 	checkqty(t, rb1, 2)
+	checkresult(t, rb1, it, 2)
 
 	err = rb.Enqueue(5)
 	checkerr(t, err)
 	checkqty(t, rb1, 3)
 
-	_, err = rb.Dequeue()
+	it, err = rb.Dequeue()
 	checkerr(t, err)
 	checkqty(t, rb1, 2)
+	checkresult(t, rb1, it, 3)
 
-	_, err = rb.Dequeue()
+	it, err = rb.Dequeue()
 	checkerr(t, err)
 	checkqty(t, rb1, 1)
+	checkresult(t, rb1, it, 4)
 
-	_, err = rb.Dequeue()
+	it, err = rb.Dequeue()
 	checkerr(t, err)
 	checkqty(t, rb1, 0)
+	checkresult(t, rb1, it, 5)
 
 	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
 		t.Fatal("expect empty event")
