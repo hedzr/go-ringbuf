@@ -47,13 +47,7 @@ func (rb *ringBuf) Quantity() uint32 {
 }
 
 func (rb *ringBuf) Size() (quantity uint32) {
-	// head = atomic.LoadUint32(&fast.head)
-	// tail = atomic.LoadUint32(&fast.tail)
 	var tail, head uint32
-	//var quad uint64
-	//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-	//head = (uint32)(quad & MaxUint32_64)
-	//tail = (uint32)(quad >> 32)
 	head = atomic.LoadUint32(&rb.head)
 	tail = atomic.LoadUint32(&rb.tail)
 	return rb.qty(head, tail)
@@ -65,10 +59,6 @@ func (rb *ringBuf) Cap() uint32 {
 
 func (rb *ringBuf) IsEmpty() (b bool) {
 	var tail, head uint32
-	//var quad uint64
-	//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-	//head = (uint32)(quad & MaxUint32_64)
-	//tail = (uint32)(quad >> 32)
 	head = atomic.LoadUint32(&rb.head)
 	tail = atomic.LoadUint32(&rb.tail)
 	b = head == tail
@@ -77,10 +67,6 @@ func (rb *ringBuf) IsEmpty() (b bool) {
 
 func (rb *ringBuf) IsFull() (b bool) {
 	var tail, head uint32
-	//var quad uint64
-	//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-	//head = (uint32)(quad & MaxUint32_64)
-	//tail = (uint32)(quad >> 32)
 	head = atomic.LoadUint32(&rb.head)
 	tail = atomic.LoadUint32(&rb.tail)
 	b = ((tail + 1) & rb.capModMask) == head

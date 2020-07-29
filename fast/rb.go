@@ -4,47 +4,12 @@ import (
 	"fmt"
 	"github.com/hedzr/log"
 	"gopkg.in/hedzr/errors.v2"
-	"io"
 	"net"
 	"runtime"
 	"sync/atomic"
 )
 
 type (
-	// Queue interface provides a set of standard queue operations
-	Queue interface {
-		Enqueue(item interface{}) (err error)
-		Dequeue() (item interface{}, err error)
-		// Cap returns the outer capacity of the ring buffer.
-		Cap() uint32
-		// Size returns the quantity of items in the ring buffer queue
-		Size() uint32
-		IsEmpty() (b bool)
-		IsFull() (b bool)
-		Reset()
-	}
-
-	// RingBuffer interface provides a set of standard ring buffer operations
-	RingBuffer interface {
-		io.Closer // for logger
-
-		Queue
-
-		Put(item interface{}) (err error)
-		Get() (item interface{}, err error)
-
-		// Quantity returns the quantity of items in the ring buffer queue
-		Quantity() uint32
-
-		// // Cap returns the outer capacity of the ring buffer.
-		// Cap() uint32
-		// IsEmpty() (b bool)
-		// IsFull() (b bool)
-
-		Debug(enabled bool) (lastState bool)
-
-		ResetCounters()
-	}
 
 	// ringBuf implements a circular buffer. It is a fixed size,
 	// and new writes will be blocked when queue is full.
@@ -75,19 +40,10 @@ type (
 		// _         cpu.CacheLinePad
 	}
 
-	//// Logger interface fo ringBuf
-	//Logger interface {
-	//	Flush() error
-	//	Info(fmt string, args ...interface{})
-	//	Debug(fmt string, args ...interface{})
-	//	Warn(fmt string, args ...interface{})
-	//	Fatal(fmt string, args ...interface{})
+	//ringer struct {
+	//	cap uint32
+	//	// _         [CacheLinePadSize-unsafe.Sizeof(uint32)]byte
 	//}
-
-	ringer struct {
-		cap uint32
-		// _         [CacheLinePadSize-unsafe.Sizeof(uint32)]byte
-	}
 )
 
 func (rb *ringBuf) Put(item interface{}) (err error) {

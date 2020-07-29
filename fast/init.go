@@ -12,9 +12,6 @@ func init() {
 	// fmt.Printf("CacheLinePadSize = %v\n", CacheLinePadSize)
 	// fmt.Printf("ringBuf.Size = %v\n", unsafe.Sizeof(ringBuf{}))
 
-	// logger, _ := zap.NewProduction()
-	// logger, _ := zap.NewDevelopment()
-
 	initializedOnce.Do(func() {
 
 		ErrQueueFull = errors.New("queue full")
@@ -29,51 +26,6 @@ func init() {
 func isInitialized() bool {
 	return atomic.LoadUint32(&initialized) == 1
 }
-
-//func initLoggerConsole(l zapcore.Level) *zap.Logger {
-//	// alevel := zap.NewAtomicLevel()
-//	// http.HandleFunc("/handle/level", alevel.ServeHTTP)
-//	// logCfg.Level = alevel
-//
-//	logCfg := zap.NewDevelopmentConfig()
-//	logCfg.Level = zap.NewAtomicLevelAt(l)
-//	logCfg.EncoderConfig.EncodeCaller = zapcore.FullCallerEncoder
-//	logger, _ := logCfg.Build()
-//	return logger
-//}
-//
-//func initLogger(logPath string, loglevel string) *zap.Logger {
-//	hook := lumberjack.Logger{
-//		Filename:   logPath, // the logging file path
-//		MaxSize:    1024,    // megabytes
-//		MaxBackups: 3,       // 3 backups kept at most
-//		MaxAge:     7,       // 7 days kept at most
-//		Compress:   true,    // disabled by default
-//	}
-//	w := zapcore.AddSync(&hook)
-//
-//	var level zapcore.Level
-//	switch loglevel {
-//	case "debug":
-//		level = zap.DebugLevel
-//	case "info":
-//		level = zap.InfoLevel
-//	case "error":
-//		level = zap.ErrorLevel
-//	default:
-//		level = zap.InfoLevel
-//	}
-//
-//	encoderConfig := zap.NewProductionEncoderConfig()
-//	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-//	core := zapcore.NewCore(
-//		zapcore.NewConsoleEncoder(encoderConfig),
-//		w,
-//		level,
-//	)
-//	logger := zap.New(core)
-//	return logger
-//}
 
 var initializedOnce sync.Once
 var initialized uint32

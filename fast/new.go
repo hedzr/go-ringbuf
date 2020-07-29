@@ -8,8 +8,7 @@ import (
 func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 	if isInitialized() {
 		size := roundUpToPower2(capacity)
-		//// logger := initLogger("all.log", "debug")
-		//logger := initLoggerConsole(zapcore.DebugLevel)
+
 		rb := &ringBuf{
 			data:       make([]rbItem, size),
 			head:       0,
@@ -25,9 +24,9 @@ func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 			opt(rb)
 		}
 
-		if rb.debugMode && rb.logger != nil {
-			// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
-		}
+		//if rb.debugMode && rb.logger != nil {
+		//	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
+		//}
 
 		for i := 0; i < (int)(size); i++ {
 			rb.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
