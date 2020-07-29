@@ -9,7 +9,7 @@ go 1.13
 // replace github.com/hedzr/errors v0.0.0 => ../errors
 
 require (
-	github.com/hedzr/log v0.1.13
-	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
+	github.com/hedzr/log v0.1.15
+	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1
 	gopkg.in/hedzr/errors.v2 v2.0.12
 )
