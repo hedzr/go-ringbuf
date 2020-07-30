@@ -31,6 +31,7 @@ type (
 		logger     log.Logger
 		//logger     *zap.Logger
 		// _         cpu.CacheLinePad
+		initializer Initializeable
 	}
 
 	rbItem struct {
@@ -82,7 +83,11 @@ func (rb *ringBuf) Enqueue(item interface{}) (err error) {
 			continue
 		}
 
-		holder.value = item
+		if rb.initializer != nil {
+			rb.initializer.CloneIn(item, holder.value)
+		} else {
+			holder.value = item
+		}
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
@@ -133,8 +138,12 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 			continue
 		}
 
-		item = holder.value
-		holder.value = 0
+		if rb.initializer != nil {
+			item = rb.initializer.CloneOut(holder.value)
+		} else {
+			item = holder.value
+			holder.value = 0
+		}
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}

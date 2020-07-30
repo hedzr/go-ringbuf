@@ -30,6 +30,9 @@ func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 
 		for i := 0; i < (int)(size); i++ {
 			rb.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
+			if rb.initializer != nil {
+				rb.data[i].value = rb.initializer.PreAlloc(i)
+			}
 		}
 	}
 	return
@@ -37,6 +40,13 @@ func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 
 // Opt interface the functional options
 type Opt func(buf *ringBuf)
+
+// WithItemInitialilzer provides your custom initializer for each data item.
+func WithItemInitializer(initializeable Initializeable) Opt {
+	return func(buf *ringBuf) {
+		buf.initializer = initializeable
+	}
+}
 
 // WithDebugMode enables the internal debug mode for more logging output, and collect the metrics for debugging
 func WithDebugMode(debug bool) Opt {
