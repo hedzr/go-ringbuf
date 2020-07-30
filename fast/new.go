@@ -41,7 +41,7 @@ func New(capacity uint32, opts ...Opt) (ringBuffer RingBuffer) {
 // Opt interface the functional options
 type Opt func(buf *ringBuf)
 
-// WithItemInitialilzer provides your custom initializer for each data item.
+// WithItemInitializer provides your custom initializer for each data item.
 func WithItemInitializer(initializeable Initializeable) Opt {
 	return func(buf *ringBuf) {
 		buf.initializer = initializeable
