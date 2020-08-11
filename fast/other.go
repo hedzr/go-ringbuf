@@ -57,6 +57,10 @@ func (rb *ringBuf) Cap() uint32 {
 	return rb.cap
 }
 
+func (rb *ringBuf) CapReal() uint32 {
+	return rb.capModMask
+}
+
 func (rb *ringBuf) IsEmpty() (b bool) {
 	var tail, head uint32
 	head = atomic.LoadUint32(&rb.head)

@@ -77,7 +77,8 @@ func initFunc() (err error) {
 		return
 	}
 
-	for i := uint32(0); i < rb.Size(); i++ {
+    // CapReal() will be available since v0.8.5, or replace it with Cap() - 1
+	for i := uint32(0); i < rb.CapReal(); i++ {
 		if err = rb.Enqueue(newRes()); err != nil {
 			return
 		}

@@ -9,6 +9,8 @@ type (
 		Dequeue() (item interface{}, err error)
 		// Cap returns the outer capacity of the ring buffer.
 		Cap() uint32
+		// CapReal returns the real (inner) capacity of the ring buffer.
+		CapReal() uint32
 		// Size returns the quantity of items in the ring buffer queue
 		Size() uint32
 		IsEmpty() (b bool)
