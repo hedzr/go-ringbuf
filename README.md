@@ -32,6 +32,14 @@ go get -v github.com/hedzr/go-ringbuf
 
 ```go
 import "github.com/hedzr/go-ringbuf/fast"
+```
+
+
+
+### Simple 1
+
+```go
+import "github.com/hedzr/go-ringbuf/fast"
 
 func main() {
 	var err error
@@ -49,6 +57,43 @@ func errChk(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+```
+
+
+
+### Using Ring-Buffer as a fixed resource pool
+
+```go
+func newRes() *Res{...}
+
+var rb fast.RingBuffer
+
+func initFunc() (err error) {
+  const maxSize = 16
+  
+  if rb = fast.New(uint32(maxSize)); rb == nil {
+		err = errors.New("cannot create fast.RingBuffer")
+		return
+	}
+
+	for i := uint32(0); i < rb.Size(); i++ {
+		if err = rb.Enqueue(newRes()); err != nil {
+			return
+		}
+	}
+}
+
+func loopFor() {
+  var err error
+  for {
+    it, err := rb.Dequeue()
+    checkErr(err)
+    if res, ok := it.(*Res); ok {
+      // do stuff with `res`, and put it back into ring-buffer
+      err = rb.Enqueue(it)
+    }
+  }
 }
 ```
 
