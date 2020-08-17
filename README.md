@@ -2,8 +2,9 @@
 
 ![Go](https://github.com/hedzr/go-ringbuf/workflows/Go/badge.svg)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/go-ringbuf.svg?label=release)](https://github.com/hedzr/go-ringbuf/releases)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/hedzr/go-ringbuf) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf?ref=badge_shield)
-
+[![](https://img.shields.io/badge/go-dev-green)](https://pkg.go.dev/github.com/hedzr/go-coaplib)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/hedzr/go-ringbuf)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf?ref=badge_shield)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hedzr/go-ringbuf)](https://goreportcard.com/report/github.com/hedzr/go-ringbuf)
 [![Coverage Status](https://coveralls.io/repos/github/hedzr/go-ringbuf/badge.svg?branch=master&.9)](https://coveralls.io/github/hedzr/go-ringbuf?branch=master)
 <!--
