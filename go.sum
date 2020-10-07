@@ -1,10 +1,6 @@
-github.com/hedzr/log v0.2.0 h1:p3ox/JzbL8+9aKNr9Y1tSDbJkFpdNC1s3xhVryu1W4E=
-github.com/hedzr/log v0.2.0/go.mod h1:bEiMe2u2XSBW5AjwDLPRUEcVHc9YmjLwtPhef21gnR0=
-github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
-github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/hedzr/log v0.2.2 h1:43pr9+y4tgqAnk8TuBjkCLXulGaSx7q4+o7ADcKhvdg=
+github.com/hedzr/log v0.2.2/go.mod h1:lDXNKm4x+b3Dpw4r9P7DfvUnsckb4MJ7kn9ri8ipMPo=
 golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1 h1:sIky/MyNRSHTrdxfsiUSS4WIAMvInbeXljJz+jDjeYE=
 golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-gopkg.in/hedzr/errors.v2 v2.1.0 h1:JL2i6J5y/sI2zt84YcGYoktOu51WEvQCQwodbECRGD4=
-gopkg.in/hedzr/errors.v2 v2.1.0/go.mod h1:viZ9QrV2on1TT44I0iGYJ9qwwVyafgNYqxOWODrixo4=
 gopkg.in/hedzr/errors.v2 v2.1.1 h1:o9br2XgJORYrPR2DntOkLS32y3ZltOyc3vqJRaDqDQA=
 gopkg.in/hedzr/errors.v2 v2.1.1/go.mod h1:DEescy6i8SVj60/wLdTtFfx9r+LIctBbOLf7hYJ30AA=
