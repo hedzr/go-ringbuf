@@ -189,12 +189,8 @@ go-build-task:
 	@#echo "  >  LDFLAGS = $(LDFLAGS)"
 	# unsupported GOOS/GOARCH pair nacl/386 ??
 	$(foreach an, $(MAIN_APPS), \
-	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)"; \
-	  $(eval ANAME := $(shell for an in $(MAIN_APPS); do \
-	    if [[ $$an == cli ]]; then echo $(APPNAME); \
-	    else echo $$an; \
-	    fi; \
-	  done)) \
+	  $(eval ANAME := $(shell if [ "$(an)" == "cli" ]; then echo $(APPNAME); else echo $(an); fi; )) \
+	  echo "  >  APP NAMEs = appname:$(APPNAME)|projname:$(PROJECTNAME)|an:$(an)|ANAME:$(ANAME)"; \
 	  $(foreach goarch, $(goarchset), \
 	    echo "     >> Building (-trimpath) $(GOBIN)/$(ANAME)_$(os)_$(goarch)...$(os)" >/dev/null; \
 	    $(GO) build -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(ANAME)_$(os)_$(goarch) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
@@ -247,16 +243,15 @@ go-build:
 	@echo "  >  Building binary '$(GOBIN)/$(APPNAME)'..."
 	# demo short wget-demo 
 	$(foreach an, $(MAIN_APPS), \
-		$(eval ANAME := $(shell for an in $(MAIN_APPS); do \
-			if [[ $$an == cli ]]; then echo $(APPNAME); \
-			else echo $$an; \
-			fi; \
-		done)) \
+	  $(eval ANAME := $(shell if [ "$(an)" == "cli" ]; then echo $(APPNAME); else echo $(an); fi; )) \
 	  echo "     +race. -trimpath. APPNAME = $(APPNAME)|$(an) -> $(ANAME), LDFLAGS = $(LDFLAGS)"; \
 	  $(GO) build -v -race -ldflags "$(LDFLAGS)" -o $(GOBIN)/$(ANAME) $(GOBASE)/$(MAIN_BUILD_PKG)/$(an); \
 	  ls -la $(LS_OPT) $(GOBIN)/$(ANAME); \
 	)
 	ls -la $(LS_OPT) $(GOBIN)/
+	$(GO) build -v -race -buildmode=plugin -o ./ci/local/share/fluent/addons/demo.so ./plugin/demo
+	chmod +x ./ci/local/share/fluent/addons/demo.so
+	ls -la $(LS_OPT) ./ci/local/share/fluent/addons/demo.so
 	# go build -o $(GOBIN)/$(APPNAME) $(GOFILES)
 	# chmod +x $(GOBIN)/*
 
@@ -354,7 +349,7 @@ gocov: coverage
 ## coverage: run go coverage test
 coverage: | $(GOBASE)
 	@echo "  >  gocov ..."
-	@$(GO) test ./... -v -race -coverprofile=coverage.txt -covermode=atomic -timeout=20m -test.short | tee coverage.log
+	@$(GO) test . -v -race -coverprofile=coverage.txt -covermode=atomic -timeout=20m -test.short | tee coverage.log
 	@$(GO) tool cover -html=coverage.txt -o cover.html
 	@open cover.html
 
@@ -368,7 +363,7 @@ coverage-full: | $(GOBASE)
 ## codecov: run go test for codecov; (codecov.io)
 codecov: | $(GOBASE)
 	@echo "  >  codecov ..."
-	@$(GO) test -v -race -coverprofile=coverage.txt -covermode=atomic
+	@$(GO) test . -v -race -coverprofile=coverage.txt -covermode=atomic
 	@bash <(curl -s https://codecov.io/bash) -t $(CODECOV_TOKEN)
 
 ## cyclo: run gocyclo tool
@@ -406,7 +401,7 @@ linux-test:
 ## docker: docker build
 docker:
 	@echo "  >  docker build ..."
-	docker build --build-arg CN=1 --build-arg GOPROXY="https://gocenter.io,direct" -t $(APPNAME):latest -t $(APPNAME):$(VERSION) .
+	docker build --build-arg CN=1 --build-arg GOPROXY="https://gocenter.io,direct" -t cmdr-fluent:latest -t cmdr-fluent:$(VERSION) .
 
 
 ## rshz: rsync to my TP470P
