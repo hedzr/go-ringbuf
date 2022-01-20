@@ -23,6 +23,16 @@ WIP:
  - english documentation not completed yet
  - documentation at: https:
 
+### v0.9.1 @2022
+
+- review all codes
+- updated deps
+- review and solve uncertain misreport failed licenses
+  - we have two deps: [hedzr/errors](https://github.com/hedzr/errors) and [hedzr/log](https://github.com/hedzr/log), and both them have no 3rd-party deps.
+  - we have no more 3rd-party deps.
+  - we assumed a free license under MIT (unified).
+
+
 ## Getting Start
 
 ```bash
