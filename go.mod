@@ -1,6 +1,6 @@
 module github.com/hedzr/go-ringbuf
 
-go 1.13
+go 1.17
 
 // replace github.com/hedzr/rules v0.0.0 => ../rules
 
