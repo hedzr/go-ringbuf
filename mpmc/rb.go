@@ -162,8 +162,10 @@ func (rb *ringBuf[T]) Enqueue(item T) (err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		log.VDebugf("[W] tail %v => %v, head: %v | ENQUEUED value = %v | [0]=%v, [1]=%v",
-			tail, nt, head, toString(holder.value), toString(rb.data[0].value), toString(rb.data[1].value))
+		if log.VerboseEnabled {
+			log.VDebugf("[W] tail %v => %v, head: %v | ENQUEUED value = %v | [0]=%v, [1]=%v",
+				tail, nt, head, toString(holder.value), toString(rb.data[0].value), toString(rb.data[1].value))
+		}
 		return
 	}
 }
@@ -214,7 +216,9 @@ func (rb *ringBuf[T]) Dequeue() (item T, err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		log.VDebugf("[ringbuf][GET] cap=%v, qty=%v, tail=%v, head=%v, new head=%v, item=%v", rb.Cap(), rb.qty(head, tail), tail, head, nh, toString(item))
+		if log.VerboseEnabled {
+			log.VDebugf("[ringbuf][GET] cap=%v, qty=%v, tail=%v, head=%v, new head=%v, item=%v", rb.Cap(), rb.qty(head, tail), tail, head, nh, toString(item))
+		}
 
 		// if item == nil {
 		// 	err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
