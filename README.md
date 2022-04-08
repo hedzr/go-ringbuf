@@ -23,6 +23,12 @@ WIP:
  - english documentation not completed yet
  - documentation at: https:
 
+### v1.0.0
+
+Last release for classical version.
+
+Next release (v2) will move to go 1.18+ with generic enabled.
+
 ### v0.9.1 @2022
 
 - review all codes

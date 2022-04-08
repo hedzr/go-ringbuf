@@ -29,7 +29,7 @@ type (
 		data       []rbItem
 		debugMode  bool
 		logger     log.Logger
-		//logger     *zap.Logger
+		// logger     *zap.Logger
 		// _         cpu.CacheLinePad
 		initializer Initializeable
 	}
@@ -41,10 +41,10 @@ type (
 		// _         cpu.CacheLinePad
 	}
 
-	//ringer struct {
+	// ringer struct {
 	//	cap uint32
 	//	// _         [CacheLinePadSize-unsafe.Sizeof(uint32)]byte
-	//}
+	// }
 )
 
 func (rb *ringBuf) Put(item interface{}) (err error) {
@@ -108,10 +108,10 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 	var tail, head, nh uint32
 	var holder *rbItem
 	for {
-		//var quad uint64
-		//quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
-		//head = (uint32)(quad & MaxUint32_64)
-		//tail = (uint32)(quad >> 32)
+		// var quad uint64
+		// quad = atomic.LoadUint64((*uint64)(unsafe.Pointer(&rb.head)))
+		// head = (uint32)(quad & MaxUint32_64)
+		// tail = (uint32)(quad >> 32)
 		head = atomic.LoadUint32(&rb.head)
 		tail = atomic.LoadUint32(&rb.tail)
 
@@ -156,12 +156,12 @@ func (rb *ringBuf) Dequeue() (item interface{}, err error) {
 			err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
 		}
 
-		//if !rb.debugMode {
+		// if !rb.debugMode {
 		//	rb.logger.Warn("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
-		//}
-		//rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
+		// }
+		// rb.logger.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
 
-		//} else {
+		// } else {
 		//	// log.Printf("<< %v DEQUEUED, %v => %v, tail: %v", item, head, nh, tail)
 		return
 	}
