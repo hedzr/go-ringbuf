@@ -39,34 +39,6 @@ func New[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 	return
 }
 
-func newRingBuf[T any](capacity uint32, opts ...Opt[T]) (ringBuffer *ringBuf[T]) {
-	if isInitialized() {
-		size := roundUpToPower2(capacity)
-
-		ringBuffer = &ringBuf[T]{
-			data:       make([]rbItem[T], size),
-			cap:        size,
-			capModMask: size - 1, // = 2^n - 1
-		}
-
-		for _, opt := range opts {
-			opt(ringBuffer)
-		}
-
-		// if rb.debugMode && rb.logger != nil {
-		//	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
-		// }
-
-		for i := 0; i < (int)(size); i++ {
-			ringBuffer.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
-			if ringBuffer.initializer != nil {
-				ringBuffer.data[i].value = ringBuffer.initializer.PreAlloc(i)
-			}
-		}
-	}
-	return
-}
-
 // Opt interface the functional options
 type Opt[T any] func(rb *ringBuf[T])
 

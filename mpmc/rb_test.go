@@ -352,8 +352,9 @@ func enqueueRoutine(t testing.TB, rb RingBuffer[int], noDebug bool, d1Closed *in
 		// time.Sleep(50 * time.Millisecond)
 		retry = 1
 	}
-	close(d1)
+
 	atomic.StoreInt32(d1Closed, 1)
+	close(d1)
 	// t.Log("[PUT] END")
 }
 
@@ -392,7 +393,7 @@ func dequeueRoutine[T any](t testing.TB, rb RingBuffer[T], noDebug bool, d1Close
 			break
 		}
 	}
-	close(d2)
+	// close(d2)
 	// t.Log("[GET] END")
 
 	// checking the fetched
@@ -405,6 +406,7 @@ func dequeueRoutine[T any](t testing.TB, rb RingBuffer[T], noDebug bool, d1Close
 		last = ix
 	}
 
+	close(d2)
 }
 
 // multiple producers
