@@ -1,14 +1,29 @@
+swaggerdocs/
+bgo
+bgo.yml
+_bgo
+tools/bgo/go.work
+go.work
+.local/
+
+*.code-workspace
+
 .idea/
 *.iml
 .DS\_Store
+
 tmp/
 bin/
 output/
 ref/
+refers/
+save/
+SAVE/
 try*/
 bash.comp.1/
 test_try/
 man*/
+study/
 *.1
 *.2
 *.3
@@ -18,7 +33,7 @@ man*/
 *.7
 *.8
 .vagrant/
-docs/
+
 *.gz
 *.zip
 *.rar
@@ -32,14 +47,16 @@ coverage.txt
 cover.out
 cover.html
 .tmp.*
-conf.d/
 *.local
+*.log
+*.tmp
+*~
+~*
 
-### two executable files
+###
 
-would_like
-would_like_n/would_like_n
-test/test
+*_string.go
+
 
 ### Go template
 # Binaries for programs and plugins
@@ -58,7 +75,3 @@ test/test
 .glide/
 
 .pid/
-
-
-devops
-main

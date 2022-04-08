@@ -2,14 +2,14 @@
  * Copyright © 2019 Hedzr Yeh.
  */
 
-// Package goringbuf provides a lock-free ring-buffer/circular-queue (in ringbuf/fast).
-package goringbuf
+// Package ringbuf provides a lock-free ring-buffer/circular-queue (in ringbuf/fast).
+package ringbuf
 
 const (
 	// AppName const
 	AppName = "ringbuf"
 	// Version const
-	Version = "1.0.0"
+	Version = "2.0.0"
 	// VersionInt const
-	VersionInt = 0x010000
+	VersionInt = 0x020000
 )
