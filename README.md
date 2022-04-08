@@ -1,4 +1,4 @@
-# go-ringbuf
+# go-ringbuf [V2]
 
 ![Go](https://github.com/hedzr/go-ringbuf/workflows/Go/badge.svg)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/go-ringbuf.svg?label=release)](https://github.com/hedzr/go-ringbuf/releases)
@@ -19,11 +19,14 @@ MPMC (multiple-producers and multiple consumers) enabled.
 
 ## History
 
-WIP:
- - english documentation not completed yet
- - documentation at: https:
+### v2.0.0 @20220408 - go 1.18+
 
-### v1.0.0
+generic version for MPMC Ring Buffer.
+
+- rewritten with go generics
+
+
+### v1.0.0 @20220408
 
 Last release for classical version.
 
@@ -42,29 +45,45 @@ Next release (v2) will move to go 1.18+ with generic enabled.
 ## Getting Start
 
 ```bash
-go get -v github.com/hedzr/go-ringbuf
-```
-
-### Import
-
-```go
-import "github.com/hedzr/go-ringbuf/fast"
+go get -v github.com/hedzr/go-ringbuf/v2
 ```
 
 
-
-### Simple 1
+### Samples
 
 ```go
-import "github.com/hedzr/go-ringbuf/fast"
+package main
+
+import (
+	"fmt"
+	"github.com/hedzr/go-ringbuf/v2"
+	"log"
+)
 
 func main() {
+	testIntRB()
+	testStringRB()
+}
+
+func testStringRB() {
 	var err error
-	var rb = fast.New(80)
+	var rb = ringbuf.New[string](80)
+	err = rb.Enqueue("abcde")
+	errChk(err)
+
+	var item string
+	item, err = rb.Dequeue()
+	errChk(err)
+	fmt.Printf("dequeue ok: %v\n", item)
+}
+
+func testIntRB() {
+	var err error
+	var rb = ringbuf.New[int](80)
 	err = rb.Enqueue(3)
 	errChk(err)
-	
-	var item interface{}
+
+	var item int
 	item, err = rb.Dequeue()
 	errChk(err)
 	fmt.Printf("dequeue ok: %v\n", item)
@@ -80,6 +99,8 @@ func errChk(err error) {
 
 
 ### Using Ring-Buffer as a fixed resource pool
+
+The following codes is for v1, needed for rewriting
 
 ```go
 func newRes() *Res{...}
@@ -129,7 +150,8 @@ Welcome
 
 ## LICENSE
 
-MIT
+Apache 2.0
 
-
+<!--
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf?ref=badge_large)
+-->
