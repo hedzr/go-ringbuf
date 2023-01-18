@@ -1,6 +1,7 @@
 package mpmc
 
 import (
+	"errors"
 	"fmt"
 	log2 "log"
 	"math/rand"
@@ -111,6 +112,52 @@ func TestRbQueue(t *testing.T) {
 
 const NCpus = 4
 
+func tmpProducer(i, num int, w *sync.WaitGroup, put *uint32, q RingBuffer[uint32], jump uint32) {
+	defer w.Done()
+
+	// var val int
+	for {
+		val := atomic.AddUint32(put, 1)
+		e := q.Put(val)
+		for e != nil {
+			if !errors.Is(e, ErrQueueFull) {
+				log2.Printf("put #%d e = %v", i, e)
+			}
+			time.Sleep(time.Millisecond)
+			e = q.Put(val)
+		}
+		// log2.Printf("setter #%d: v = %v", i, val)
+		if val > jump {
+			break
+		}
+	}
+
+	log2.Printf("put #%d/%d done", i, num)
+}
+
+func tmpConsumer(i, num int, w *sync.WaitGroup, get *uint32, q RingBuffer[uint32], jump uint32) {
+	defer w.Done()
+	time.Sleep(300 * time.Millisecond)
+
+	// var val uint32
+	for {
+		v, e := q.Get()
+		for e != nil {
+			if !errors.Is(e, ErrQueueEmpty) {
+				log2.Printf("get #%d e = %v , v %v", i, e, v)
+			}
+			time.Sleep(time.Millisecond)
+			v, e = q.Get()
+		}
+		// log2.Printf("<< %v got in getter #%d. total got: %v", v, i, get)
+		// val++
+		if atomic.AddUint32(get, 1) >= jump {
+			break
+		}
+	}
+	log2.Printf("get #%d/%d done", i, num)
+}
+
 func TestRbQueue2(t *testing.T) {
 	runtime.GOMAXPROCS(NCpus)
 
@@ -125,66 +172,23 @@ func TestRbQueue2(t *testing.T) {
 	}
 
 	var (
-		w    sync.WaitGroup
-		get  uint32
-		put  uint32
-		num  = NCpus * 2
-		jump = uint32(10009)
+		w        sync.WaitGroup
+		get, put uint32
+		num      = NCpus * 2
+		jump     = uint32(10009)
 	)
 
 	w.Add(num)
 	go func() {
 		for i := 0; i < num; i++ {
-			go func(i int) {
-				defer w.Done()
-
-				// var val int
-				for {
-					val := atomic.AddUint32(&put, 1)
-					e := q.Put(val)
-					for e != nil {
-						if e != ErrQueueFull {
-							log2.Printf("put #%d e = %v", i, e)
-						}
-						time.Sleep(time.Millisecond)
-						e = q.Put(val)
-					}
-					// log2.Printf("setter #%d: v = %v", i, val)
-					if val > jump {
-						break
-					}
-				}
-
-				log2.Printf("put #%d done", i)
-			}(i)
+			go tmpProducer(i, num, &w, &put, q, jump)
 		}
 	}()
 
 	w.Add(num)
 	go func() {
 		for i := 0; i < num; i++ {
-			go func(i int) {
-				defer w.Done()
-				time.Sleep(300 * time.Millisecond)
-
-				// var val uint32
-				for {
-					v, e := q.Get()
-					for e != nil {
-						if e != ErrQueueEmpty {
-							log2.Printf("get #%d e = %v , v %v", i, e, v)
-						}
-						time.Sleep(time.Millisecond)
-						v, e = q.Get()
-					}
-					// log2.Printf("<< %v got in getter #%d. total got: %v", v, i, get)
-					// val++
-					if atomic.AddUint32(&get, 1) >= jump {
-						break
-					}
-				}
-				log2.Printf("get #%d done", i)
-			}(i)
+			go tmpConsumer(i, num, &w, &get, q, jump)
 		}
 	}()
 
@@ -220,7 +224,7 @@ func TestRbQueue2(t *testing.T) {
 
 func TestRingBuf_Put_OneByOne(t *testing.T) {
 	var err error
-	rb := New[uint32](NLtd, WithDebugMode[uint32](true))
+	rb := New(NLtd, WithDebugMode[uint32](true))
 	size := rb.Cap() - 1
 	// t.Logf("Ring Buffer created, capacity = %v, real size: %v", size+1, size)
 	defer rb.Close()
@@ -229,37 +233,34 @@ func TestRingBuf_Put_OneByOne(t *testing.T) {
 		err = rb.Enqueue(i)
 		if err != nil {
 			t.Fatalf("faild on i=%v. err: %+v", i, err)
-		} else {
+			// } else {
 			// t.Logf("%5d. '%v' put, quantity = %v.", i, i, fast.Quantity())
 		}
 	}
 
-	for i := uint32(size); i < uint32(size)+6; i++ {
+	for i := size; i < size+6; i++ {
 		err = rb.Enqueue(i)
-		if err != ErrQueueFull {
+		if !errors.Is(err, ErrQueueFull) {
 			t.Fatalf("> %3d. expect ErrQueueFull but no error raised. err: %+v", i, err)
 		}
 	}
 
 	var it interface{}
 	for i := 0; ; i++ {
-
 		it, err = rb.Dequeue()
 		if err != nil {
-			if err == ErrQueueEmpty {
+			if errors.Is(err, ErrQueueEmpty) {
 				break
 			}
 			t.Fatalf("faild on i=%v. err: %+v. item: %v", i, err, it)
-		} else {
+			// } else {
 			// t.Logf("< %3d. '%v' GOT, quantity = %v.", i, it, fast.Quantity())
 		}
 	}
 }
 
-//
 // go test ./... -race -run '^TestRingBuf_Put_Randomized$'
 // go test ./fast -race -run '^TestRingBuf_Put_R.*'
-//
 func TestRingBuf_Put_Randomized(t *testing.T) {
 	var maxN = NLtd * 1000
 	putRandomized(t, maxN, NLtd, func(r RingBuffer[int]) {
@@ -267,7 +268,6 @@ func TestRingBuf_Put_Randomized(t *testing.T) {
 	})
 }
 
-//
 // go test ./ringbuf/fast -race -bench=. -run=none
 // go test ./ringbuf/fast -race -bench '.*Put128' -run=none
 //
@@ -280,7 +280,6 @@ func TestRingBuf_Put_Randomized(t *testing.T) {
 // go tool pprof profile.out
 //
 // https://my.oschina.net/solate/blog/3034188
-//
 func BenchmarkRingBuf_Put16384(b *testing.B) {
 	b.ResetTimer()
 	putRandomized(b, b.N, 10000)
@@ -303,7 +302,7 @@ func putRandomized(t testing.TB, maxN int, queueSize uint32, opts ...func(r Ring
 	d1, d2 := make(chan struct{}), make(chan struct{})
 
 	_, noDebug := t.(*testing.B)
-	var rb RingBuffer[int] = New[int](queueSize, WithDebugMode[int](!noDebug))
+	var rb = New(queueSize, WithDebugMode[int](!noDebug))
 	for _, cb := range opts {
 		cb(rb)
 	}
@@ -323,13 +322,12 @@ func putRandomized(t testing.TB, maxN int, queueSize uint32, opts ...func(r Ring
 }
 
 func enqueueRoutine(t testing.TB, rb RingBuffer[int], noDebug bool, d1Closed *int32, d1 chan struct{}, maxN int) {
-
 	var err error
 	for i, retry := 0, 1; i < maxN; i++ {
 	retryPut:
 		err = rb.Enqueue(i)
 		if err != nil {
-			if err == ErrQueueFull {
+			if errors.Is(err, ErrQueueFull) {
 				// block till queue not full
 				time.Sleep(time.Duration(retry) * time.Microsecond)
 				retry++
@@ -359,8 +357,7 @@ func enqueueRoutine(t testing.TB, rb RingBuffer[int], noDebug bool, d1Closed *in
 }
 
 func dequeueRoutine[T any](t testing.TB, rb RingBuffer[T], noDebug bool, d1Closed *int32, d2 chan struct{}) {
-
-	d := time.Duration(rand.Intn(1000)+1000) * time.Millisecond
+	d := time.Duration(rand.Intn(1000)+1000) * time.Millisecond //nolint:gosec
 	time.Sleep(d)
 	fmt.Printf("qty: %v\n", rb.Quantity())
 
@@ -368,11 +365,11 @@ func dequeueRoutine[T any](t testing.TB, rb RingBuffer[T], noDebug bool, d1Close
 	var it interface{}
 	var fetched []int
 	// t.Logf("[GET] d1Closed: %v, err: %v", d1Closed, err)
-	for i, retry := 0, 1; err != ErrQueueEmpty || err == nil; i++ {
+	for i, retry := 0, 1; !errors.Is(err, ErrQueueEmpty) || err == nil; i++ {
 	retryGet:
 		it, err = rb.Dequeue()
 		if err != nil {
-			if err == ErrQueueEmpty {
+			if errors.Is(err, ErrQueueEmpty) {
 				// block till queue not empty
 				time.Sleep(time.Duration(retry) * time.Microsecond)
 				retry++
@@ -471,7 +468,7 @@ func mTestQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get, lossT
 		// t.Logf("- [R] i: %v, grp: %v, cnt: %v", i, grp, cnt)
 		go func(g int) {
 			defer wgGet.Done()
-			d := time.Duration(rand.Intn(1500)+1500) * time.Millisecond
+			d := time.Duration(rand.Intn(1500)+1500) * time.Millisecond //nolint:gosec
 			time.Sleep(d)
 			m := atomic.LoadInt64((*int64)(&ltGetMax))
 			if int64(d) > m {
@@ -485,7 +482,7 @@ func mTestQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get, lossT
 			retryGet:
 				_, err = rb.Dequeue()
 				if err != nil {
-					if err == ErrQueueEmpty {
+					if errors.Is(err, ErrQueueEmpty) {
 						// block till queue not empty
 						retry++
 						if retry > 2000 {
@@ -524,13 +521,13 @@ func mTestQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get, lossT
 	put, get = time.Duration(putI), time.Duration(getI)
 
 	// fmt.Printf("    [R] -------------- grp: %v END (put:%v, get: %v).\n", grp, put, get)
-	return
+	return //nolint:nakedret
 }
 
 func putterRoutine(g int, t testing.TB, rb RingBuffer[string], wgPut *sync.WaitGroup, ltPutMax *time.Duration, id, pc *int32, putI, putRetries *int64, cnt int) {
 	defer wgPut.Done()
 
-	d := time.Duration(rand.Intn(1000)+10) * time.Millisecond
+	d := time.Duration(rand.Intn(1000)+10) * time.Millisecond //nolint:gosec
 	time.Sleep(d)
 	m := atomic.LoadInt64((*int64)(ltPutMax))
 	if int64(d) > m {
@@ -545,7 +542,7 @@ func putterRoutine(g int, t testing.TB, rb RingBuffer[string], wgPut *sync.WaitG
 	retryPut:
 		err = rb.Enqueue(val)
 		if err != nil {
-			if err == ErrQueueFull {
+			if errors.Is(err, ErrQueueFull) {
 				// block till queue not full
 				time.Sleep(time.Duration(retry) * time.Microsecond)
 				retry++
@@ -567,7 +564,6 @@ func putterRoutine(g int, t testing.TB, rb RingBuffer[string], wgPut *sync.WaitG
 	atomic.AddInt64(putI, int64(putTime))
 }
 
-//
 // go test ./ringbuf/fast -v -race -run 'TestQueuePutGetLong'
 // go test ./ringbuf/fast -v -race -run '^TestQueuePutGetLong$'
 // go test ./ringbuf/fast -v -race -run '^TestQueuePutGetLong.*'
@@ -608,11 +604,9 @@ func tQueuePutGet(t *testing.T, cnt int, qSize uint32) {
 	t.Logf("Get: %d, use: %v, %v/op", sum, getD, getD/time.Duration(sum))
 }
 
-//
 // go test ./ringbuf/fast -race -bench 'BenchmarkPutGet' -run=none -benchtime=10s -v
 //
 // go test ./ringbuf/fast -race -bench='.*PutGet16384$' -run=none
-//
 func BenchmarkPutGet(b *testing.B) {
 	b.ResetTimer()
 	bQueuePutGet(b, b.N, runtime.NumCPU()*4)
@@ -640,6 +634,55 @@ func bQueuePutGet(b testing.TB, cnt, loops int) {
 	b.Logf("Get: %d, use: %v, %v/op", sum, getD, getD/time.Duration(sum))
 }
 
+func _subRoutine(t testing.TB, rb RingBuffer[string], g, cnt int, id *int32) {
+	var err error
+	for j, retry := 0, 1; j < cnt; j++ {
+		val := fmt.Sprintf("Node.%d.%d.%d", g, j, atomic.AddInt32(id, 1))
+	retryPut:
+		err = rb.Enqueue(val)
+		if err != nil {
+			if errors.Is(err, ErrQueueFull) {
+				// block till queue not full
+				time.Sleep(time.Duration(retry) * time.Microsecond)
+				retry++
+				if retry > 1000 {
+					fmt.Printf("[W][ERR] retry failed. val=%q.\n", val)
+					break
+				}
+				goto retryPut
+			}
+			t.Fatalf("[PUT] failed on i=%v. err: %+v.", g, err)
+		}
+		retry = 1
+	}
+	// fmt.Printf("[W] i/grp: %v. done.\n", g)
+}
+
+func _subRoutine2(t testing.TB, rb RingBuffer[string], g, cnt int, id *int32) { //nolint:unparam
+	var err error
+	for j, retry := 0, 1; j < cnt; j++ {
+	retryGet:
+		_, err = rb.Get()
+		if err != nil {
+			if errors.Is(err, ErrQueueEmpty) {
+				// block till queue not empty
+				// if !noDebug {
+				// t.Logf("[GET] %5d. quantity = %v. EMPTY! block till queue not empty", i, fast.Quantity())
+				// }
+				time.Sleep(time.Duration(retry) * time.Microsecond)
+				retry++
+				if retry > 1000 {
+					fmt.Printf("[R][ERR] retry failed. grp=%v, j=%v.\n", g, j)
+					break
+				}
+				goto retryGet
+			}
+			t.Fatalf("[GET] failed on i=%v. err: %+v.", g, err)
+		}
+		retry = 1
+	}
+}
+
 func testQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get time.Duration) {
 	var wg sync.WaitGroup
 	var id int32
@@ -651,27 +694,7 @@ func testQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get time.Du
 		// t.Logf("- [W] grp: %v, cnt: %v", grp, cnt)
 		go func(g int) {
 			defer wg.Done()
-			var err error
-			for j, retry := 0, 1; j < cnt; j++ {
-				val := fmt.Sprintf("Node.%d.%d.%d", g, j, atomic.AddInt32(&id, 1))
-			retryPut:
-				err = rb.Enqueue(val)
-				if err != nil {
-					if err == ErrQueueFull {
-						// block till queue not full
-						time.Sleep(time.Duration(retry) * time.Microsecond)
-						retry++
-						if retry > 1000 {
-							fmt.Printf("[W][ERR] retry failed. val=%q.\n", val)
-							break
-						}
-						goto retryPut
-					}
-					t.Fatalf("[PUT] failed on i=%v. err: %+v.", g, err)
-				}
-				retry = 1
-			}
-			// fmt.Printf("[W] i/grp: %v. done.\n", g)
+			_subRoutine(t, rb, g, cnt, &id)
 		}(i)
 	}
 	wg.Wait()
@@ -686,29 +709,7 @@ func testQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get time.Du
 		// t.Logf("- [R] i: %v, grp: %v, cnt: %v", i, grp, cnt)
 		go func(g int) {
 			defer wg2.Done()
-			var err error
-			for j, retry := 0, 1; j < cnt; j++ {
-			retryGet:
-				_, err = rb.Get()
-				if err != nil {
-					if err == ErrQueueEmpty {
-						// block till queue not empty
-						// if !noDebug {
-						// t.Logf("[GET] %5d. quantity = %v. EMPTY! block till queue not empty", i, fast.Quantity())
-						// }
-						time.Sleep(time.Duration(retry) * time.Microsecond)
-						retry++
-						if retry > 1000 {
-							fmt.Printf("[R][ERR] retry failed. grp=%v, j=%v.\n", g, j)
-							break
-						}
-						goto retryGet
-					}
-					t.Fatalf("[GET] failed on i=%v. err: %+v.", g, err)
-				}
-				retry = 1
-			}
-			// fmt.Printf("[R] i/grp: %v. done.\n", g)
+			_subRoutine2(t, rb, g, cnt, &id)
 		}(i)
 	}
 	wg2.Wait()
@@ -719,11 +720,11 @@ func testQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get time.Du
 	}
 
 	// fmt.Printf("    [R] -------------- grp: %v END (put:%v, get: %v).\n", grp, put, get)
-	return
+	return //nolint:nakedret
 }
 
 func BenchmarkHello(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		fmt.Sprintf("hello")
+		_ = fmt.Sprint("hello") //nolint:gosimple
 	}
 }

@@ -2,10 +2,11 @@ package mpmc
 
 import (
 	"fmt"
-	"github.com/hedzr/log"
 	"net"
 	"runtime"
 	"sync/atomic"
+
+	"github.com/hedzr/log"
 )
 
 // New returns the RingBuffer object
@@ -117,7 +118,7 @@ func (rb *ringBuf[T]) Enqueue(item T) (err error) {
 
 		atomic.CompareAndSwapUint32(&rb.tail, tail, nt)
 	retry:
-		if !atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) {
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) { //nolint:gomnd
 			if atomic.LoadUint64(&holder.readWrite) == 0 {
 				goto retry // sometimes, short circuit
 			}
@@ -130,7 +131,7 @@ func (rb *ringBuf[T]) Enqueue(item T) (err error) {
 		} else {
 			holder.value = item
 		}
-		if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) {
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 2, 1) { //nolint:gomnd
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
@@ -170,7 +171,7 @@ func (rb *ringBuf[T]) Dequeue() (item T, err error) {
 		nh = (head + 1) & rb.capModMask
 		atomic.CompareAndSwapUint32(&rb.head, head, nh)
 	retry:
-		if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 3) {
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 3) { //nolint:gomnd
 			if atomic.LoadUint64(&holder.readWrite) == 1 {
 				goto retry // sometimes, short circuit
 			}
@@ -184,7 +185,7 @@ func (rb *ringBuf[T]) Dequeue() (item T, err error) {
 			item = holder.value
 			// holder.value = zero
 		}
-		if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) {
+		if !atomic.CompareAndSwapUint64(&holder.readWrite, 3, 0) { //nolint:gomnd
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 

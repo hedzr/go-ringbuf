@@ -99,10 +99,10 @@ func (rb *ringBuf[T]) Debug(enabled bool) (lastState bool) {
 func roundUpToPower2(v uint32) uint32 {
 	v--
 	v |= v >> 1
-	v |= v >> 2
-	v |= v >> 4
-	v |= v >> 8
-	v |= v >> 16
+	v |= v >> 2  //nolint:gomnd
+	v |= v >> 4  //nolint:gomnd
+	v |= v >> 8  //nolint:gomnd
+	v |= v >> 16 //nolint:gomnd
 	v++
 	return v
 }

@@ -1,6 +1,7 @@
 package mpmc
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func (s *DI) Inc() DI {
 	return *s
 }
 
-func checkDIResult(t *testing.T, desc string, rb1 *ringBuf[DI], got DI, expect int) {
+func checkDIResult(t *testing.T, desc string, rb1 *ringBuf[DI], got DI, expect int) { //nolint:unparam
 	if got.intVal == expect {
 		t.Logf("[%s] got = %v / %v | expected: %v", desc, got, got, expect)
 	} else {
@@ -43,15 +44,15 @@ func checkDIResult(t *testing.T, desc string, rb1 *ringBuf[DI], got DI, expect i
 func TestCustomItem(t *testing.T) {
 	templ := &DI{1, nil}
 
-	rb := newRingBuf[DI](4, WithItemInitializer[DI](templ))
+	rb := newRingBuf(4, WithItemInitializer[DI](templ))
 	rb1 := rb // rb.(*ringBuf[DI])
 
 	var err error
 	var it DI
 	var dataItem *DI
 
-	if it, err = rb.Dequeue(); err != ErrQueueEmpty {
-		t.Fatal("expect empty event")
+	if it, err = rb.Dequeue(); !errors.Is(err, ErrQueueEmpty) {
+		t.Fatalf("expect empty event. it: %v", it)
 	}
 
 	dataItem = &DI{0, templ}
@@ -68,14 +69,14 @@ func TestCustomItem(t *testing.T) {
 	checkerr(t, err)
 	checkqty(t, "Enqueue(dataItem.Inc()) #3", rb1, 3)
 
-	if err = rb.Enqueue(*dataItem); err != ErrQueueFull { // 3, full
+	if err = rb.Enqueue(*dataItem); !errors.Is(err, ErrQueueFull) { // 3, full
 		t.Fatal("expect full event")
 	}
 
 	it, err = rb.Dequeue() // 3 -> 2
 	checkerr(t, err)
 	checkqty(t, "Dequeue()", rb1, 2)
-	checkDIResult(t, "Dequeue()", rb1, it, 1)
+	checkDIResult(t, "Dequeue() 3->2", rb1, it, 1)
 
 	err = rb.Enqueue(dataItem.Inc()) // 3
 	// t.Log(rb1.qty(rb1.head, rb1.tail))  // wanted: 3
@@ -106,7 +107,7 @@ func TestCustomItem(t *testing.T) {
 	checkqty(t, "Dequeue()", rb1, 0)
 	checkDIResult(t, "Dequeue()", rb1, it, 5)
 
-	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
+	if _, err = rb.Dequeue(); !errors.Is(err, ErrQueueEmpty) {
 		t.Fatal("expect empty event")
 	}
 }

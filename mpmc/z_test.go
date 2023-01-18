@@ -1,9 +1,11 @@
 package mpmc
 
 import (
-	"github.com/hedzr/log"
+	"errors"
 	log2 "log"
 	"testing"
+
+	"github.com/hedzr/log"
 )
 
 func newRingBuf[T any](capacity uint32, opts ...Opt[T]) (ringBuffer *ringBuf[T]) {
@@ -39,7 +41,7 @@ func TestResets(t *testing.T) {
 
 	log2.Printf("")
 
-	rb := newRingBuf[int](NLtd,
+	rb := newRingBuf(NLtd,
 		WithDebugMode[int](true),
 		WithLogger[int](logger),
 	)
@@ -66,7 +68,7 @@ func checkerr(t *testing.T, err error) {
 }
 
 func checkqty[T any](t *testing.T, desc string, rb1 *ringBuf[T], expect uint32) {
-	if qty, inner := rb1.Quantity(), rb1.qty(rb1.head, rb1.tail); qty == inner && qty == expect {
+	if qty, inner := rb1.Quantity(), rb1.qty(rb1.head, rb1.tail); qty == inner && qty == expect { //nolint:gocritic
 		t.Logf("[%s] qty = %v / %v | expected: %v", desc, qty, inner, expect)
 	} else {
 		t.Fatalf("FATAL ERROR: [%s] qty = %v / %v | expected: %v | WRONG!!", desc, qty, inner, expect)
@@ -88,8 +90,8 @@ func TestRoundedQty(t *testing.T) {
 	var err error
 	var it interface{}
 
-	if it, err = rb.Dequeue(); err != ErrQueueEmpty {
-		t.Fatal("expect empty event")
+	if it, err = rb.Dequeue(); !errors.Is(err, ErrQueueEmpty) {
+		t.Fatalf("expect empty event. it: %v", it)
 	}
 
 	err = rb.Enqueue(1)
@@ -104,7 +106,7 @@ func TestRoundedQty(t *testing.T) {
 	checkerr(t, err)
 	checkqty(t, "Enqueue(3)", rb, 3)
 
-	if err = rb.Enqueue(3); err != ErrQueueFull { // full, 3
+	if err = rb.Enqueue(3); !errors.Is(err, ErrQueueFull) { // full, 3
 		t.Fatal("expect full event")
 	}
 
@@ -142,7 +144,7 @@ func TestRoundedQty(t *testing.T) {
 	checkqty(t, "Dequeue()", rb, 0)
 	checkresult(t, "Dequeue()", rb, it, 5)
 
-	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
+	if _, err = rb.Dequeue(); !errors.Is(err, ErrQueueEmpty) {
 		t.Fatal("expect empty event")
 	}
 }
