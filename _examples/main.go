@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/hedzr/go-ringbuf/fast"
 	"log"
+
+	"gopkg.in/hedzr/go-ringbuf.v1/fast"
 )
 
 func main() {
