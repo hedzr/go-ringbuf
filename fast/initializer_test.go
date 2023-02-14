@@ -62,7 +62,7 @@ func TestCustomItem(t *testing.T) {
 	var it interface{}
 	var dataItem *DI
 
-	if it, err = rb.Dequeue(); err != ErrQueueEmpty {
+	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
 		t.Fatal("expect empty event")
 	}
 

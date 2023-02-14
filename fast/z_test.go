@@ -1,9 +1,10 @@
 package fast
 
 import (
-	"github.com/hedzr/log"
 	log2 "log"
 	"testing"
+
+	"github.com/hedzr/log"
 )
 
 func TestResets(t *testing.T) {
@@ -58,7 +59,7 @@ func TestRoundedQty(t *testing.T) {
 	var err error
 	var it interface{}
 
-	if it, err = rb.Dequeue(); err != ErrQueueEmpty {
+	if _, err = rb.Dequeue(); err != ErrQueueEmpty {
 		t.Fatal("expect empty event")
 	}
 

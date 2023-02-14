@@ -2,11 +2,12 @@ package fast
 
 import (
 	"fmt"
-	"github.com/hedzr/log"
-	"gopkg.in/hedzr/errors.v2"
 	"net"
 	"runtime"
 	"sync/atomic"
+
+	"github.com/hedzr/log"
+	"gopkg.in/hedzr/errors.v3"
 )
 
 type (

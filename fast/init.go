@@ -1,11 +1,12 @@
 package fast
 
 import (
-	"golang.org/x/sys/cpu"
-	"gopkg.in/hedzr/errors.v2"
 	"sync"
 	"sync/atomic"
 	"unsafe"
+
+	"golang.org/x/sys/cpu"
+	"gopkg.in/hedzr/errors.v3"
 )
 
 func init() {

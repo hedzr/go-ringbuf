@@ -256,10 +256,8 @@ func TestRingBuf_Put_OneByOne(t *testing.T) {
 	}
 }
 
-//
 // go test ./... -race -run '^TestRingBuf_Put_Randomized$'
 // go test ./fast -race -run '^TestRingBuf_Put_R.*'
-//
 func TestRingBuf_Put_Randomized(t *testing.T) {
 	var maxN = NLtd * 1000
 	putRandomized(t, maxN, NLtd, func(r RingBuffer) {
@@ -267,7 +265,6 @@ func TestRingBuf_Put_Randomized(t *testing.T) {
 	})
 }
 
-//
 // go test ./ringbuf/fast -race -bench=. -run=none
 // go test ./ringbuf/fast -race -bench '.*Put128' -run=none
 //
@@ -280,7 +277,6 @@ func TestRingBuf_Put_Randomized(t *testing.T) {
 // go tool pprof profile.out
 //
 // https://my.oschina.net/solate/blog/3034188
-//
 func BenchmarkRingBuf_Put16384(b *testing.B) {
 	b.ResetTimer()
 	putRandomized(b, b.N, 10000)
@@ -565,7 +561,6 @@ func putterRoutine(g int, t testing.TB, rb RingBuffer, wgPut *sync.WaitGroup, lt
 	atomic.AddInt64(putI, int64(putTime))
 }
 
-//
 // go test ./ringbuf/fast -v -race -run 'TestQueuePutGetLong'
 // go test ./ringbuf/fast -v -race -run '^TestQueuePutGetLong$'
 // go test ./ringbuf/fast -v -race -run '^TestQueuePutGetLong.*'
@@ -606,11 +601,9 @@ func tQueuePutGet(t *testing.T, cnt int, qSize uint32) {
 	t.Logf("Get: %d, use: %v, %v/op", sum, getD, getD/time.Duration(sum))
 }
 
-//
 // go test ./ringbuf/fast -race -bench 'BenchmarkPutGet' -run=none -benchtime=10s -v
 //
 // go test ./ringbuf/fast -race -bench='.*PutGet16384$' -run=none
-//
 func BenchmarkPutGet(b *testing.B) {
 	b.ResetTimer()
 	bQueuePutGet(b, b.N, runtime.NumCPU()*4)
@@ -722,6 +715,6 @@ func testQueuePutGet(t testing.TB, grp, cnt int, qSize uint32) (put, get time.Du
 
 func BenchmarkHello(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		fmt.Sprintf("hello")
+		_ = fmt.Sprintf("hello")
 	}
 }

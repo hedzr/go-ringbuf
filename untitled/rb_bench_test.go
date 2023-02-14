@@ -5,8 +5,9 @@
 package untitled_test
 
 import (
-	"github.com/hedzr/go-ringbuf/untitled"
 	"testing"
+
+	"gopkg.in/hedzr/go-ringbuf.v1/untitled"
 )
 
 // BenchmarkRingBuffer_Write tests

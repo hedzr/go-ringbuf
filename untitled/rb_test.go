@@ -6,9 +6,10 @@ package untitled_test
 
 import (
 	"bytes"
-	"github.com/hedzr/go-ringbuf/untitled"
 	"io"
 	"testing"
+
+	"gopkg.in/hedzr/go-ringbuf.v1/untitled"
 )
 
 func TestBuffer_Impl(t *testing.T) {
