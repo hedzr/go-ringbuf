@@ -1,6 +1,6 @@
 github.com/hedzr/log v1.5.47 h1:bRjphM6WnLwOQSQpQTAOsoDcqBoizj/u/wKk52BWVKI=
 github.com/hedzr/log v1.5.47/go.mod h1:zmkxW95eUJnD8TUsG8xUrDBFPjWLG8ofEHmacLczNZk=
-golang.org/x/sys v0.0.0-20220406163625-3f8b81556e12 h1:QyVthZKMsyaQwBTJE04jdNN0Pp5Fn9Qga0mrgxyERQM=
-golang.org/x/sys v0.0.0-20220406163625-3f8b81556e12/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.1.0 h1:kunALQeHf1/185U1i0GOB/fy1IPRDDpuoOOqRReG57U=
+golang.org/x/sys v0.1.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 gopkg.in/hedzr/errors.v3 v3.0.17 h1:aXFjxV2AOwfjRqTbDRjsgUM504rtQLz9TTAlk36lnx0=
 gopkg.in/hedzr/errors.v3 v3.0.17/go.mod h1:UwtyepqtGTIAmdZGSc7wxXT5Gfd/BjcfRMhPpxwkJM4=
