@@ -10,6 +10,6 @@ go 1.17
 
 require (
 	github.com/hedzr/log v1.6.1
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	golang.org/x/sys v0.5.0
 	gopkg.in/hedzr/errors.v3 v3.1.0
 )
