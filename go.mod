@@ -9,7 +9,7 @@ go 1.18
 // replace github.com/hedzr/errors v0.0.0 => ../errors
 
 require (
-	github.com/hedzr/log v1.5.47
-	golang.org/x/sys v0.1.0
-	gopkg.in/hedzr/errors.v3 v3.0.17
+	github.com/hedzr/log v1.6.1
+	golang.org/x/sys v0.5.0
+	gopkg.in/hedzr/errors.v3 v3.1.0
 )
