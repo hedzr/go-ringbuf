@@ -12,12 +12,15 @@
 [![codecov](https://codecov.io/gh/hedzr/go-ringbuf/branch/master/graph/badge.svg)](https://codecov.io/gh/hedzr/go-ringbuf) 
 -->
 
-
 `go-ringbuf` provides a high-performance, lock-free circular queue (ring buffer) implementation in golang.
 
 MPMC (multiple-producers and multiple consumers) enabled.
 
 ## History
+
+### v2.0.+
+
+securrity updates
 
 ### v2.0.0 @20220408 - go 1.18+
 
@@ -25,6 +28,9 @@ generic version for MPMC Ring Buffer.
 
 - rewritten with go generics
 
+### v1.0.+
+
+security updates
 
 ### v1.0.0 @20220408
 
