@@ -20,7 +20,7 @@ MPMC (multiple-producers and multiple consumers) enabled.
 
 ### v2.0.+
 
-securrity updates
+security updates
 
 ### v2.0.0 @20220408 - go 1.18+
 
