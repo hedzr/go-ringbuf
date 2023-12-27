@@ -30,7 +30,7 @@ func New[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 		//	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
 		// }
 
-		for i := 0; i < (int)(size); i++ {
+		for i := 0; i < int(size); i++ {
 			rb.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
 			if rb.initializer != nil {
 				rb.data[i].value = rb.initializer.PreAlloc(i)
@@ -51,7 +51,7 @@ func WithItemInitializer[T any](initializeable Initializeable[T]) Opt[T] {
 }
 
 // WithDebugMode enables the internal debug mode for more logging output, and collect the metrics for debugging
-func WithDebugMode[T any](debug bool) Opt[T] {
+func WithDebugMode[T any](_ bool) Opt[T] {
 	return func(buf *ringBuf[T]) {
 		// buf.debugMode = debug
 	}
@@ -135,8 +135,12 @@ func (rb *ringBuf[T]) Enqueue(item T) (err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		state.Verbose("[W] enqueued",
-			"tail", tail, "new-tail", nt, "head", head, "value", toString(holder.value), "value(rb.data[0])", toString(rb.data[0].value), "value(rb.data[1])", toString(rb.data[1].value))
+		if state.VerboseEnabled {
+			state.Verbose("[W] enqueued",
+				"tail", tail, "new-tail", nt, "head", head, "value", toString(holder.value),
+				"value(rb.data[0])", toString(rb.data[0].value),
+				"value(rb.data[1])", toString(rb.data[1].value))
+		}
 		return
 	}
 }
@@ -187,15 +191,18 @@ func (rb *ringBuf[T]) Dequeue() (item T, err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		state.Verbose("[ringbuf][GET] states are:",
-			"cap", rb.Cap(), "qty", rb.qty(head, tail), "tail", tail, "head", head, "new-head", nh, "item", toString(item))
+		if state.VerboseEnabled {
+			state.Verbose("[ringbuf][GET] states are:",
+				"cap", rb.Cap(), "qty", rb.qty(head, tail), "tail", tail, "head", head, "new-head", nh, "item", toString(item))
+		}
 
 		// if item == nil {
 		// 	err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)
 		// }
 
 		// if !rb.debugMode {
-		//	log.VWarnf("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)), zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
+		//	log.VWarnf("[ringbuf][GET] ", zap.Uint32("cap", rb.cap), zap.Uint32("qty", rb.qty(head, tail)),
+		//    zap.Uint32("tail", tail), zap.Uint32("head", head), zap.Uint32("new head", nh))
 		// }
 		// log.Fatal("[ringbuf][GET] [ERR] unexpected nil element value FOUND!")
 
@@ -206,19 +213,20 @@ func (rb *ringBuf[T]) Dequeue() (item T, err error) {
 }
 
 func toString(i any) (sz string) {
-	if s, ok := i.(string); ok {
+	switch s := i.(type) {
+	case string:
 		sz = s
-	} else if s, ok := i.([]byte); ok {
+	case []byte:
 		sz = string(s)
-		// } else if s, ok := i.(*rbItem[T]); ok {
-		// 	sz = toString(s.value)
-	} else if s, ok := i.(*struct {
+	// case *rbItem[T]:
+	// 	sz = toString(s.value)
+	case *struct {
 		RemoteAddr *net.UDPAddr
 		Data       []byte
-	}); ok {
+	}:
 		sz = string(s.Data)
-	} else {
+	default:
 		sz = fmt.Sprintf("%v", i)
 	}
-	return
+	return sz
 }
