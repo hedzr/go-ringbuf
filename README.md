@@ -18,6 +18,12 @@ MPMC (multiple-producers and multiple consumers) enabled.
 
 ## History
 
+### v2.1.0
+
+- remove extras deps
+  - use 'log/slog' instead 'hedzr/log', 'errors' instead 'hedzr/errors.v3'
+- remove WithLogger()
+
 ### v2.0.+
 
 security updates
@@ -43,7 +49,8 @@ Next release (v2) will move to go 1.18+ with generic enabled.
 - review all codes
 - updated deps
 - review and solve uncertain misreport failed licenses
-  - we have two deps: [hedzr/errors](https://github.com/hedzr/errors) and [hedzr/log](https://github.com/hedzr/log), and both them have no 3rd-party deps.
+  - ~~we have two deps: [hedzr/errors](https://github.com/hedzr/errors) and [hedzr/log](https://github.com/hedzr/log), and both them have no 3rd-party deps.~~
+    - since 2.1.0, any deps removed.
   - we have no more 3rd-party deps.
   - we assumed a free license under MIT (unified).
 
