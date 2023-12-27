@@ -33,7 +33,7 @@ func (s *DI) Inc() DI {
 	return *s
 }
 
-func checkDIResult(t *testing.T, desc string, rb1 *ringBuf[DI], got DI, expect int) { //nolint:unparam
+func checkDIResult(t *testing.T, desc string, _ *ringBuf[DI], got DI, expect int) { //nolint:unparam
 	if got.intVal == expect {
 		t.Logf("[%s] got = %v / %v | expected: %v", desc, got, got, expect)
 	} else {

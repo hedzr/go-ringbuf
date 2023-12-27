@@ -1,12 +1,12 @@
 package mpmc
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"unsafe"
 
 	"golang.org/x/sys/cpu"
-	"gopkg.in/hedzr/errors.v3"
 )
 
 func init() { //nolint:gochecknoinits
@@ -26,6 +26,7 @@ func isInitialized() bool {
 }
 
 var initializedOnce sync.Once
+
 var initialized uint32
 
 // ErrQueueFull queue full when enqueueing
@@ -50,7 +51,7 @@ const CacheLinePadSize = unsafe.Sizeof(cpu.CacheLinePad{})
 // const MinUint16 = 0
 
 // MaxUint32_64 represents the maximal uint32 value
-const MaxUint32_64 = (uint64)(^uint32(0))
+const MaxUint32_64 = uint64(^uint32(0))
 
 // MaxUint64 represents the maximal uint64 value
 const MaxUint64 = ^uint64(0)

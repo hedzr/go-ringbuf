@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"sync/atomic"
 
-	"github.com/hedzr/log"
+	"github.com/hedzr/go-ringbuf/v2/mpmc/state"
 )
 
 // New returns the RingBuffer object
@@ -57,12 +57,12 @@ func WithDebugMode[T any](debug bool) Opt[T] {
 	}
 }
 
-// WithLogger setup a logger
-func WithLogger[T any](logger log.Logger) Opt[T] {
-	return func(buf *ringBuf[T]) {
-		// buf.logger = logger
-	}
-}
+// // WithLogger setup a logger
+// func WithLogger[T any](logger log.Logger) Opt[T] {
+// 	return func(buf *ringBuf[T]) {
+// 		// buf.logger = logger
+// 	}
+// }
 
 // ringBuf implements a circular buffer. It is a fixed size,
 // and new writes will be blocked when queue is full.
@@ -135,10 +135,8 @@ func (rb *ringBuf[T]) Enqueue(item T) (err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		if log.VerboseEnabled {
-			log.VDebugf("[W] tail %v => %v, head: %v | ENQUEUED value = %v | [0]=%v, [1]=%v",
-				tail, nt, head, toString(holder.value), toString(rb.data[0].value), toString(rb.data[1].value))
-		}
+		state.Verbose("[W] enqueued",
+			"tail", tail, "new-tail", nt, "head", head, "value", toString(holder.value), "value(rb.data[0])", toString(rb.data[0].value), "value(rb.data[1])", toString(rb.data[1].value))
 		return
 	}
 }
@@ -189,9 +187,8 @@ func (rb *ringBuf[T]) Dequeue() (item T, err error) {
 			err = ErrRaced // runtime.Gosched() // never happens
 		}
 
-		if log.VerboseEnabled {
-			log.VDebugf("[ringbuf][GET] cap=%v, qty=%v, tail=%v, head=%v, new head=%v, item=%v", rb.Cap(), rb.qty(head, tail), tail, head, nh, toString(item))
-		}
+		state.Verbose("[ringbuf][GET] states are:",
+			"cap", rb.Cap(), "qty", rb.qty(head, tail), "tail", tail, "head", head, "new-head", nh, "item", toString(item))
 
 		// if item == nil {
 		// 	err = errors.New("[ringbuf][GET] cap: %v, qty: %v, head: %v, tail: %v, new head: %v", rb.cap, rb.qty(head, tail), head, tail, nh)

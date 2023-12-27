@@ -2,10 +2,7 @@ package mpmc
 
 import (
 	"errors"
-	log2 "log"
 	"testing"
-
-	"github.com/hedzr/log"
 )
 
 func newRingBuf[T any](capacity uint32, opts ...Opt[T]) (ringBuffer *ringBuf[T]) {
@@ -26,7 +23,7 @@ func newRingBuf[T any](capacity uint32, opts ...Opt[T]) (ringBuffer *ringBuf[T])
 		//	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
 		// }
 
-		for i := 0; i < (int)(size); i++ {
+		for i := 0; i < int(size); i++ {
 			ringBuffer.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
 			if ringBuffer.initializer != nil {
 				ringBuffer.data[i].value = ringBuffer.initializer.PreAlloc(i)
@@ -37,13 +34,8 @@ func newRingBuf[T any](capacity uint32, opts ...Opt[T]) (ringBuffer *ringBuf[T])
 }
 
 func TestResets(t *testing.T) {
-	logger := log.NewDummyLogger()
-
-	log2.Printf("")
-
 	rb := newRingBuf(NLtd,
 		WithDebugMode[int](true),
-		WithLogger[int](logger),
 	)
 	defer rb.Close()
 	rb.ResetCounters()
