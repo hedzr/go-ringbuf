@@ -1,6 +1,11 @@
 package mpmc
 
-import "sync/atomic"
+import (
+	"fmt"
+	"runtime"
+	"strings"
+	"sync/atomic"
+)
 
 // Dbg exposes some internal fields for debugging
 type Dbg interface {
@@ -80,7 +85,7 @@ func (rb *ringBuf[T]) Reset() {
 	// atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), MaxUint64)
 	atomic.StoreUint32(&rb.head, MaxUint32)
 	atomic.StoreUint32(&rb.tail, MaxUint32)
-	for i := 0; i < (int)(rb.cap); i++ {
+	for i := 0; i < int(rb.cap); i++ {
 		rb.data[i].readWrite = 0 // bit 0: readable, bit 1: writable
 	}
 	// atomic.StoreUint64((*uint64)(unsafe.Pointer(&rb.head)), 0)
@@ -91,18 +96,68 @@ func (rb *ringBuf[T]) Reset() {
 func (rb *ringBuf[T]) Debug(enabled bool) (lastState bool) {
 	// lastState = rb.debugMode
 	// rb.debugMode = enabled
+	_ = enabled
+	return
+}
+
+func (rb *ringBuf[T]) String() (ret string) {
+	var sb strings.Builder
+	_, _ = sb.WriteRune('[')
+
+	head := atomic.LoadUint32(&rb.head)
+	tail := atomic.LoadUint32(&rb.tail)
+	if head < tail {
+		for i := head; i < tail; i++ {
+			it := &rb.data[i]
+		retry:
+			if st := atomic.LoadUint64(&it.readWrite); st > 1 {
+				runtime.Gosched() // time to time
+				goto retry
+			}
+			str := fmt.Sprintf("%v,", it.value)
+			_, _ = sb.WriteString(str)
+		}
+	} else if head > tail {
+		for i := head; i < rb.cap; i++ {
+			it := &rb.data[i]
+		retry1:
+			if st := atomic.LoadUint64(&it.readWrite); st > 1 {
+				runtime.Gosched() // time to time
+				goto retry1
+			}
+			str := fmt.Sprintf("%v,", it.value)
+			_, _ = sb.WriteString(str)
+		}
+
+		for i := uint32(0); i < tail; i++ {
+			it := &rb.data[i]
+		retry2:
+			if st := atomic.LoadUint64(&it.readWrite); st > 1 {
+				runtime.Gosched() // time to time
+				goto retry2
+			}
+			str := fmt.Sprintf("%v,", it.value)
+			_, _ = sb.WriteString(str)
+		}
+	}
+
+	// _, _ = sb.WriteRune(']')
+	// _, _ = sb.WriteRune('/')
+	str := fmt.Sprintf("]/%v", rb.Size())
+	_, _ = sb.WriteString(str)
+	ret = sb.String()
 	return
 }
 
 // roundUpToPower2 takes a uint32 positive integer and
 // rounds it up to the next power of 2.
 func roundUpToPower2(v uint32) uint32 {
-	v--
-	v |= v >> 1
-	v |= v >> 2  //nolint:gomnd
-	v |= v >> 4  //nolint:gomnd
-	v |= v >> 8  //nolint:gomnd
-	v |= v >> 16 //nolint:gomnd
-	v++
+	v--          //nolint:revive
+	v |= v >> 1  //nolint:revive
+	v |= v >> 2  //nolint:gomnd,revive
+	v |= v >> 4  //nolint:gomnd,revive
+	v |= v >> 8  //nolint:gomnd,revive
+	v |= v >> 16 //nolint:gomnd,revive
+	v++          //nolint:revive
 	return v
 }
