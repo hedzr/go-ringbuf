@@ -67,12 +67,13 @@ func checkqty[T any](t *testing.T, desc string, rb1 *ringBuf[T], expect uint32) 
 	}
 }
 
-func checkresult[T any](t *testing.T, desc string, rb1 *ringBuf[T], got interface{}, expect int) {
+func checkresult[T any](t *testing.T, desc string, rb1 *ringBuf[T], got any, expect int) {
 	if g, ok := got.(int); ok && g == expect {
 		t.Logf("[%s] got = %v / %v | expected: %v", desc, got, g, expect)
 	} else {
 		t.Fatalf("[%s] got = %v / %v | expected: %v | WRONG!!", desc, got, g, expect)
 	}
+	_ = rb1
 }
 
 func TestRoundedQty(t *testing.T) {
@@ -80,7 +81,7 @@ func TestRoundedQty(t *testing.T) {
 	rb1 := rb // .(*ringBuf[int])
 
 	var err error
-	var it interface{}
+	var it any
 
 	if it, err = rb.Dequeue(); !errors.Is(err, ErrQueueEmpty) {
 		t.Fatalf("expect empty event. it: %v", it)

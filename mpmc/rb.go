@@ -9,33 +9,68 @@ import (
 	"github.com/hedzr/go-ringbuf/v2/mpmc/state"
 )
 
-// New returns the RingBuffer object
+// New returns the RingBuffer object.
+//
+// It returns ErrQueueFull when the queue is full and
+// putting a new element.
 func New[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
-	if isInitialized() {
+	return newRingBuffer(func(capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 		size := roundUpToPower2(capacity)
-
 		rb := &ringBuf[T]{
 			data:       make([]rbItem[T], size),
 			cap:        size,
 			capModMask: size - 1, // = 2^n - 1
 		}
-
-		ringBuffer = rb
-
 		for _, opt := range opts {
 			opt(rb)
 		}
+		ringBuffer = rb
+		return
+	}, capacity, opts...)
+}
 
-		// if rb.debugMode && rb.logger != nil {
-		//	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
+// NewOverlappedRingBuffer initials a ring buffer, which overwrites
+// its head element if it's full.
+func NewOverlappedRingBuffer[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
+	return newRingBuffer(func(capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
+		size := roundUpToPower2(capacity)
+		rb := &orbuf[T]{
+			ringBuf[T]{
+				data:       make([]rbItem[T], size),
+				cap:        size,
+				capModMask: size - 1, // = 2^n - 1
+			},
+		}
+		for _, opt := range opts {
+			opt(&rb.ringBuf)
+		}
+		ringBuffer = rb
+		return
+	}, capacity, opts...)
+}
+
+type Creator[T any] func(capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T])
+
+func newRingBuffer[T any](creator Creator[T], capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
+	if isInitialized() {
+		ringBuffer = creator(capacity, opts...)
+
+		// ringBuffer = rb
+
+		// for _, opt := range opts {
+		// 	opt(rb)
 		// }
 
-		for i := 0; i < int(size); i++ {
-			rb.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
-			if rb.initializer != nil {
-				rb.data[i].value = rb.initializer.PreAlloc(i)
-			}
-		}
+		// // if rb.debugMode && rb.logger != nil {
+		// //	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
+		// // }
+
+		// for i := 0; i < int(size); i++ {
+		// 	rb.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
+		// 	if rb.initializer != nil {
+		// 		rb.data[i].value = rb.initializer.PreAlloc(i)
+		// 	}
+		// }
 	}
 	return
 }
@@ -52,7 +87,7 @@ func WithItemInitializer[T any](initializeable Initializeable[T]) Opt[T] {
 
 // WithDebugMode enables the internal debug mode for more logging output, and collect the metrics for debugging
 func WithDebugMode[T any](_ bool) Opt[T] {
-	return func(buf *ringBuf[T]) {
+	return func(_ *ringBuf[T]) {
 		// buf.debugMode = debug
 	}
 }
@@ -71,13 +106,13 @@ type ringBuf[T any] struct {
 	capModMask uint32
 	_          [CacheLinePadSize - 8]byte
 	head       uint32
-	_          [CacheLinePadSize - 4]byte
+	_          [CacheLinePadSize - 4]byte //nolint:revive
 	tail       uint32
-	_          [CacheLinePadSize - 4]byte
+	_          [CacheLinePadSize - 4]byte //nolint:revive
 	putWaits   uint64
-	_          [CacheLinePadSize - 8]byte
+	_          [CacheLinePadSize - 8]byte //nolint:revive
 	getWaits   uint64
-	_          [CacheLinePadSize - 8]byte
+	_          [CacheLinePadSize - 8]byte //nolint:revive
 	data       []rbItem[T]
 	// debugMode  bool
 	// logger     log.Logger
@@ -93,9 +128,9 @@ type rbItem[T any] struct {
 	// _         cpu.CacheLinePad
 }
 
-func (rb *ringBuf[T]) Put(item T) (err error) { return rb.Enqueue(item) }
+func (rb *ringBuf[T]) Put(item T) (err error) { return rb.Enqueue(item) } //nolint:revive
 
-func (rb *ringBuf[T]) Enqueue(item T) (err error) {
+func (rb *ringBuf[T]) Enqueue(item T) (err error) { //nolint:revive
 	var tail, head, nt uint32
 	var holder *rbItem[T]
 	for {
@@ -145,9 +180,9 @@ func (rb *ringBuf[T]) Enqueue(item T) (err error) {
 	}
 }
 
-func (rb *ringBuf[T]) Get() (item T, err error) { return rb.Dequeue() }
+func (rb *ringBuf[T]) Get() (item T, err error) { return rb.Dequeue() } //nolint:revive
 
-func (rb *ringBuf[T]) Dequeue() (item T, err error) {
+func (rb *ringBuf[T]) Dequeue() (item T, err error) { //nolint:revive
 	var tail, head, nh uint32
 	var holder *rbItem[T]
 	for {
