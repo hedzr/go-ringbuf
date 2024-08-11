@@ -11,8 +11,8 @@ import (
 
 // New returns the RingBuffer object.
 //
-// It returns ErrQueueFull when the queue is full and
-// putting a new element.
+// It returns [ErrQueueFull] when you're trying to put a new
+// element into a full ring buffer.
 func New[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 	return newRingBuffer(func(capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 		size := roundUpToPower2(capacity)
@@ -29,8 +29,17 @@ func New[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 	}, capacity, opts...)
 }
 
-// NewOverlappedRingBuffer initials a ring buffer, which overwrites
-// its head element if it's full.
+// NewOverlappedRingBuffer make a new instance of the overlapped ring
+// buffer, which overwrites its head element if it's full.
+//
+// When an unexpected state occurred, the returned value could be nil.
+//
+// In this case, checking it for unavailable value is recommended.
+// This could happen if a physical core fault detected in high-freq,
+// high-pressure, and high-temperature place.
+//
+// For the normal runtime environment, unexpected state should be
+// impossible, so ignore it is safe.
 func NewOverlappedRingBuffer[T any](capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 	return newRingBuffer(func(capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 		size := roundUpToPower2(capacity)
@@ -49,28 +58,12 @@ func NewOverlappedRingBuffer[T any](capacity uint32, opts ...Opt[T]) (ringBuffer
 	}, capacity, opts...)
 }
 
+// Creator _
 type Creator[T any] func(capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T])
 
 func newRingBuffer[T any](creator Creator[T], capacity uint32, opts ...Opt[T]) (ringBuffer RingBuffer[T]) {
 	if isInitialized() {
 		ringBuffer = creator(capacity, opts...)
-
-		// ringBuffer = rb
-
-		// for _, opt := range opts {
-		// 	opt(rb)
-		// }
-
-		// // if rb.debugMode && rb.logger != nil {
-		// //	// rb.logger.Debug("[ringbuf][INI] ", zap.Uint32("cap", rb.cap), zap.Uint32("capModMask", rb.capModMask))
-		// // }
-
-		// for i := 0; i < int(size); i++ {
-		// 	rb.data[i].readWrite &= 0 // bit 0: readable, bit 1: writable
-		// 	if rb.initializer != nil {
-		// 		rb.data[i].value = rb.initializer.PreAlloc(i)
-		// 	}
-		// }
 	}
 	return
 }
