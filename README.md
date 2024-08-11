@@ -2,7 +2,7 @@
 
 ![Go](https://github.com/hedzr/go-ringbuf/workflows/Go/badge.svg)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/go-ringbuf.svg?label=release)](https://github.com/hedzr/go-ringbuf/releases)
-[![](https://img.shields.io/badge/go-dev-green)](https://pkg.go.dev/github.com/hedzr/go-ringbuf)
+[![go.dev](https://img.shields.io/badge/go-dev-green)](https://pkg.go.dev/github.com/hedzr/go-ringbuf)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/hedzr/go-ringbuf)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf?ref=badge_shield)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hedzr/go-ringbuf)](https://goreportcard.com/report/github.com/hedzr/go-ringbuf)
@@ -14,14 +14,19 @@
 
 `go-ringbuf` provides a high-performance, lock-free circular queue (ring buffer) implementation in golang.
 
-MPMC (multiple-producers and multiple consumers) enabled.
+MPMC (multiple producers and multiple consumers) enabled.
 
 ## History
+
+### v2.2.0
+
+- added new impl to support overlapped ringbuf
+- security updates
 
 ### v2.1.0
 
 - remove extras deps
-  - use 'log/slog' instead 'hedzr/log', 'errors' instead 'hedzr/errors.v3'
+  - replaced 'hedzr/log' with 'log/slog', 'hedzr/errors.v3' with 'errors'
 - remove WithLogger()
 
 ### v2.0.+
@@ -34,7 +39,7 @@ generic version for MPMC Ring Buffer.
 
 - rewritten with go generics
 
-### v1.0.+
+### v1.0.+ [archived]
 
 security updates
 
@@ -54,13 +59,11 @@ Next release (v2) will move to go 1.18+ with generic enabled.
   - we have no more 3rd-party deps.
   - we assumed a free license under MIT (unified).
 
-
 ## Getting Start
 
 ```bash
 go get -v github.com/hedzr/go-ringbuf/v2
 ```
-
 
 ### Samples
 
@@ -68,48 +71,47 @@ go get -v github.com/hedzr/go-ringbuf/v2
 package main
 
 import (
-	"fmt"
-	"github.com/hedzr/go-ringbuf/v2"
-	"log"
+ "fmt"
+ "log"
+
+ "github.com/hedzr/go-ringbuf/v2"
 )
 
 func main() {
-	testIntRB()
-	testStringRB()
+ testIntRB()
+ testStringRB()
 }
 
 func testStringRB() {
-	var err error
-	var rb = ringbuf.New[string](80)
-	err = rb.Enqueue("abcde")
-	errChk(err)
+ var err error
+ var rb = ringbuf.New[string](80)
+ err = rb.Enqueue("abcde")
+ errChk(err)
 
-	var item string
-	item, err = rb.Dequeue()
-	errChk(err)
-	fmt.Printf("dequeue ok: %v\n", item)
+ var item string
+ item, err = rb.Dequeue()
+ errChk(err)
+ fmt.Printf("dequeue ok: %v\n", item)
 }
 
 func testIntRB() {
-	var err error
-	var rb = ringbuf.New[int](80)
-	err = rb.Enqueue(3)
-	errChk(err)
+ var err error
+ var rb = ringbuf.New[int](80)
+ err = rb.Enqueue(3)
+ errChk(err)
 
-	var item int
-	item, err = rb.Dequeue()
-	errChk(err)
-	fmt.Printf("dequeue ok: %v\n", item)
+ var item int
+ item, err = rb.Dequeue()
+ errChk(err)
+ fmt.Printf("dequeue ok: %v\n", item)
 }
 
 func errChk(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
+ if err != nil {
+  log.Fatal(err)
+ }
 }
 ```
-
-
 
 ### Using Ring-Buffer as a fixed resource pool
 
@@ -124,16 +126,16 @@ func initFunc() (err error) {
   const maxSize = 16
   
   if rb = fast.New(uint32(maxSize)); rb == nil {
-		err = errors.New("cannot create fast.RingBuffer")
-		return
-	}
+  err = errors.New("cannot create fast.RingBuffer")
+  return
+ }
 
     // CapReal() will be available since v0.8.8, or replace it with Cap() - 1
-	for i := uint32(0); i < rb.CapReal(); i++ {
-		if err = rb.Enqueue(newRes()); err != nil {
-			return
-		}
-	}
+ for i := uint32(0); i < rb.CapReal(); i++ {
+  if err = rb.Enqueue(newRes()); err != nil {
+   return
+  }
+ }
 }
 
 func loopFor() {
@@ -149,17 +151,28 @@ func loopFor() {
 }
 ```
 
+### Using Overlapped Ring Buffer
 
+Since v2.2.0, `NewOverlappedRingBuffer()` can initiate a different ring buffer, which
+allows us to overwrite the head element if putting new element into a **full** ring buffer.
 
+```go
+func testStringRB() {
+ var err error
+ var rb = ringbuf.NewOverlappedRingBuffer[string](80)
+ err = rb.Enqueue("abcde")
+ errChk(err)
 
-
-
-
+ var item string
+ item, err = rb.Dequeue()
+ errChk(err)
+ fmt.Printf("dequeue ok: %v\n", item)
+}
+```
 
 ## Contrib
 
 Welcome
-
 
 ## LICENSE
 
