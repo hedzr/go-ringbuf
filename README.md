@@ -18,6 +18,10 @@ MPMC (multiple producers and multiple consumers) enabled.
 
 ## History
 
+### v2.2.1
+
+- security updates
+
 ### v2.2.0
 
 - added new impl to support overlapped ringbuf
