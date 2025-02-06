@@ -8,4 +8,4 @@ go 1.18
 
 // replace github.com/hedzr/errors v0.0.0 => ../errors
 
-require golang.org/x/sys v0.24.0
+require golang.org/x/sys v0.30.0
