@@ -9,7 +9,7 @@ const (
 	// AppName const
 	AppName = "ringbuf"
 	// Version const
-	Version = "2.2.1"
+	Version = "2.2.2"
 	// VersionInt const
-	VersionInt = 0x020201
+	VersionInt = 0x020202
 )

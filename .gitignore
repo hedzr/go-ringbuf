@@ -6,6 +6,7 @@ tools/bgo/go.work
 go.work
 .local/
 lint.txt
+logs/
 
 *.code-workspace
 

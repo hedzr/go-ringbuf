@@ -18,6 +18,13 @@ MPMC (multiple producers and multiple consumers) enabled.
 
 ## History
 
+### v2.2.2
+
+- [resp for #7] `NewOverlappedRingBuffer` returns `RichOverlappedRingBuffer[T]` now, which gives some new alternatives apis of `Enqueue` so that you can collect `overwrites` and `size` from the returning data.
+  > The legacy codes keep its stable with the original `Enqueue`.
+  > For a normal ringbuf, non-overlapped, nothing's changed since the current capacity (size) is not a very important value for measuring.
+  > If not, issue me.
+
 ### v2.2.1
 
 - security updates
@@ -124,22 +131,22 @@ The following codes is for v1, needed for rewriting
 ```go
 func newRes() *Res{...}
 
-var rb fast.RingBuffer
+var rb mpmc.RingBuffer
 
 func initFunc() (err error) {
   const maxSize = 16
   
-  if rb = fast.New(uint32(maxSize)); rb == nil {
-  err = errors.New("cannot create fast.RingBuffer")
-  return
- }
-
-    // CapReal() will be available since v0.8.8, or replace it with Cap() - 1
- for i := uint32(0); i < rb.CapReal(); i++ {
-  if err = rb.Enqueue(newRes()); err != nil {
-   return
+  if rb = mpmc.New(uint32(maxSize)); rb == nil {
+    err = errors.New("cannot create mpmc.RingBuffer")
+    return
   }
- }
+
+  // CapReal() will be available since v0.8.8, or replace it with Cap() - 1
+  for i := uint32(0); i < rb.CapReal(); i++ {
+    if err = rb.Enqueue(newRes()); err != nil {
+      return
+    }
+  }
 }
 
 func loopFor() {
@@ -162,15 +169,15 @@ allows us to overwrite the head element if putting new element into a **full** r
 
 ```go
 func testStringRB() {
- var err error
- var rb = ringbuf.NewOverlappedRingBuffer[string](80)
- err = rb.Enqueue("abcde")
- errChk(err)
+  var err error
+  var rb = ringbuf.NewOverlappedRingBuffer[string](80)
+  err = rb.Enqueue("abcde")
+  errChk(err)
 
- var item string
- item, err = rb.Dequeue()
- errChk(err)
- fmt.Printf("dequeue ok: %v\n", item)
+  var item string
+  item, err = rb.Dequeue()
+  errChk(err)
+  fmt.Printf("dequeue ok: %v\n", item)
 }
 ```
 
@@ -181,7 +188,3 @@ Welcome
 ## LICENSE
 
 Apache 2.0
-
-<!--
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhedzr%2Fgo-ringbuf?ref=badge_large)
--->
