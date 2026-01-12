@@ -34,8 +34,10 @@ func (rb *orbuf[T]) EnqueueM(item T) (overwrites uint32, err error) { //nolint:r
 			overwrites++
 		}
 
+		if !atomic.CompareAndSwapUint32(&rb.tail, tail, nt) {
+			continue // tail CAS failed, retry with fresh values
+		}
 		holder = &rb.data[tail]
-		atomic.CompareAndSwapUint32(&rb.tail, tail, nt)
 	retry:
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) { //nolint:gomnd
 			if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 2) { //nolint:gomnd
@@ -88,8 +90,10 @@ func (rb *orbuf[T]) EnqueueMRich(item T) (size, overwrites uint32, err error) { 
 			size = rb.qty(head, tail) + 1
 		}
 
+		if !atomic.CompareAndSwapUint32(&rb.tail, tail, nt) {
+			continue // tail CAS failed, retry with fresh values
+		}
 		holder = &rb.data[tail]
-		atomic.CompareAndSwapUint32(&rb.tail, tail, nt)
 	retry:
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) { //nolint:gomnd
 			if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 2) { //nolint:gomnd
@@ -142,8 +146,10 @@ func (rb *orbuf[T]) Enqueue(item T) (err error) { //nolint:revive
 			atomic.CompareAndSwapUint32(&rb.head, head, nh)
 		}
 
+		if !atomic.CompareAndSwapUint32(&rb.tail, tail, nt) {
+			continue // tail CAS failed, retry with fresh values
+		}
 		holder = &rb.data[tail]
-		atomic.CompareAndSwapUint32(&rb.tail, tail, nt)
 	retry:
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 0, 2) { //nolint:gomnd
 			if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 2) { //nolint:gomnd
@@ -197,10 +203,11 @@ func (rb *orbuf[T]) Dequeue() (item T, err error) { //nolint:revive
 			return
 		}
 
-		holder = &rb.data[head]
-
 		nh = (head + 1) & rb.capModMask
-		atomic.CompareAndSwapUint32(&rb.head, head, nh)
+		if !atomic.CompareAndSwapUint32(&rb.head, head, nh) {
+			continue // head CAS failed, retry with fresh values
+		}
+		holder = &rb.data[head]
 	retry:
 		if !atomic.CompareAndSwapUint64(&holder.readWrite, 1, 3) { //nolint:gomnd
 			if atomic.LoadUint64(&holder.readWrite) == 1 {
