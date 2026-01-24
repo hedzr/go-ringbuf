@@ -3,8 +3,44 @@ package mpmc
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 )
+
+func TestForIssue9(t *testing.T) { //nolint:revive
+	buf := NewOverlappedRingBuffer[int](1000)
+
+	var wg sync.WaitGroup
+	writesPerGoroutine := 100
+	numGoroutines := 2
+
+	for g := 0; g < numGoroutines; g++ {
+		wg.Add(1)
+		go func(base int) {
+			defer wg.Done()
+			for i := 0; i < writesPerGoroutine; i++ {
+				buf.EnqueueM(base + i)
+			}
+		}(g * writesPerGoroutine)
+	}
+
+	wg.Wait()
+
+	// Count records
+	count := 0
+	for !buf.IsEmpty() {
+		_, err := buf.Dequeue()
+		if err == nil {
+			count++
+		}
+	}
+
+	expected := numGoroutines * writesPerGoroutine
+	fmt.Printf("Expected: %d, Got: %d\n", expected, count)
+	if count != expected {
+		t.Fatal("BUG: Data loss detected!")
+	}
+}
 
 func TestOverlappedRingBuf_Put_OneByOne(t *testing.T) { //nolint:revive
 	var err error
