@@ -18,6 +18,10 @@ MPMC (multiple producers and multiple consumers) enabled.
 
 ## History
 
+### v2.2.3
+
+- fixed issue [#9](https://github.com/hedzr/go-ringbuf/issues/9) (via pr [#10](https://github.com/hedzr/go-ringbuf/pull/10), thx [@srgg](https://github.com/srgg)) a datarace problem caused by an uncheckd cas load failue
+
 ### v2.2.2
 
 - [resp for #7] `NewOverlappedRingBuffer` returns `RichOverlappedRingBuffer[T]` now, which gives some new alternatives apis of `Enqueue` so that you can collect `overwrites` and `size` from the returning data.
