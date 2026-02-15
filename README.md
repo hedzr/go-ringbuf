@@ -21,6 +21,7 @@ MPMC (multiple producers and multiple consumers) enabled.
 ### v2.2.5
 
 - security patch
+- fix go version in gh-action
 
 ### v2.2.3
 
